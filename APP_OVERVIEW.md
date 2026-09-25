@@ -147,7 +147,7 @@ Important rule: `INSERT OR REPLACE` is only used for brand-new rows. Updating an
 
 ## 13. Tests
 
-- **245 unit tests** (JVM): physics solvers, spec, lint, generators, Lottie structure, fitter, tracker, codecs, live sync server, token exporter, doodle geometry and SVG.
+- **250 unit tests** (JVM): physics solvers, spec, lint, generators, Lottie structure, fitter, tracker, codecs, live sync server, token exporter, doodle geometry and SVG.
 - **55 instrumented tests** (on a real emulator): every migration step, cascade deletes, pin and undo flows, haptic markers, all 12 interaction screens opening, doodle drawing flow, trigger interactions, token saving, draw-based capture, and the **video pipeline decoding a real encoded mp4 of a known spring**.
 
 ## 14. Known limits
@@ -157,14 +157,14 @@ Important rule: `INSERT OR REPLACE` is only used for brand-new rows. Updating an
 - Video matching follows one solid-coloured object; it is not general tracking.
 - Live sync is gated by a 4-digit pairing code (5 wrong tries lock it for 30 s and change the code), but traffic is plain HTTP on the local network: it stops casual snooping, not someone capturing traffic. A shared link works on the same Wi-Fi only; some guest/café networks block device-to-device traffic.
 - Gesture exports are an honest representation of the release/settle spring; wiring it to a platform's own gesture system is left to the developer.
-- Not built: a QR code for the bridge link (the link itself exists), a "Compare with..." row inside each editor, a .motionlab that carries screenshots or tokens.
+- Not built: a "Compare with..." row inside each editor, a .motionlab that carries screenshots or tokens.
 - Token drift compares pasted code against its own export stamp; a formatter that rewrites lines counts as an edit, and JSON exports (Lottie, spec) can't carry a stamp.
 - Deleting an experiment and pressing Undo restores it without its screenshot.
 
 ## 15. Phase 10 (schema v13)
 
 - **Compare** (Home): race two springs over one shared curve with a Blend slider, or play a blind round (guess which preset is A; best streak kept).
-- **Sync v2**: pairing code + session tokens, `/pair`, `/exports`, and a browser bridge page served by the phone at `/` (all platforms' code, live, copy/download); "Copy bridge link" gives a pre-paired link (30 min). The Figma plugin asks for the code.
+- **Sync v2**: pairing code + session tokens, `/pair`, `/exports`, and a browser bridge page served by the phone at `/` (all platforms' code, live, copy/download); "Copy bridge link" gives a pre-paired link (30 min), and "Show QR code" shows it as a QR (own encoder, no dependency; verified to scan with an independent decoder). The Figma plugin asks for the code.
 - **Motion grade** (A-F, from the lint) and a **spring fingerprint** glyph on Home; **haptic-only export** (Android VibrationEffect, CoreHaptics Swift, .ahap).
 - **Sketch it** capture: drag across a fake screen; timed points fit through the same `SpringFit`. **Two-object** video tracking gives each spring and the delay between them, and can create a staggered list.
 - **Screenshot preview**: the shared Stage paints your own app screenshot behind the object (own table, so stale editor saves can't clobber it).

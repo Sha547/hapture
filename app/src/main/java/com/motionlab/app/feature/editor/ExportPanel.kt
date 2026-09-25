@@ -2,6 +2,8 @@ package com.motionlab.app.feature.editor
 
 import android.content.Intent
 import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.testTag
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
@@ -19,6 +21,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.snapshotFlow
 import com.motionlab.app.core.sync.LiveSync
+import com.motionlab.app.ui.design.QrImage
 import com.motionlab.app.export.ExportBundle
 import com.motionlab.app.export.ExportStamp
 import com.motionlab.app.core.spec.LintIssue
@@ -72,6 +75,7 @@ internal fun ExportPanel(
     val saveToken = LocalSaveMotionToken.current
     var naming by remember { mutableStateOf(false) }
     var tokenName by remember { mutableStateOf("") }
+    var qrLink by remember { mutableStateOf<String?>(null) }
 
     fun current(): MotionSpec? = motion?.invoke() ?: MotionSpec.fromDesignJson(spec())
 
@@ -163,6 +167,13 @@ internal fun ExportPanel(
             trailing = { Text(if (LiveSync.running) "Stop" else "Start", style = MaterialTheme.typography.bodySmall, color = t.inkSoft) },
         )
         if (LiveSync.running) {
+            ListRow(
+                title = "Show QR code",
+                subtitle = "Scan it on a laptop or phone on this Wi-Fi to open the bridge already paired",
+                onClick = { qrLink = LiveSync.bridgeLink(host) },
+                trailing = { AppIcon(IconKind.SHARE, tint = t.inkSoft, size = 18.dp) },
+                modifier = Modifier.testTag("showQr"),
+            )
             copyRow("bridge", "Copy bridge link", "Opens the browser bridge already paired; works on this Wi-Fi for 30 minutes") { LiveSync.bridgeLink(host) }
             copyRow("client", "Client snippet", "JavaScript, Kotlin and Swift code that follows the stream") { LiveSync.clientSnippet(host) }
         }
@@ -177,6 +188,25 @@ internal fun ExportPanel(
                 naming = true
             },
             trailing = { AppIcon(IconKind.PLUS, tint = t.inkSoft, size = 18.dp) },
+        )
+    }
+
+    qrLink?.let { link ->
+        AlertDialog(
+            onDismissRequest = { qrLink = null },
+            containerColor = t.surface, titleContentColor = t.ink, textContentColor = t.ink,
+            title = { Text("Scan to open the bridge", style = MaterialTheme.typography.titleLarge) },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    QrImage(link, Modifier.testTag("qrImage"))
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "Same Wi-Fi only. Anyone who scans this can read the spec until sync stops or 30 minutes pass.",
+                        style = MaterialTheme.typography.bodySmall, color = t.inkSoft,
+                    )
+                }
+            },
+            confirmButton = { TextButton(onClick = { qrLink = null }) { Text("Done", color = t.ink, style = MaterialTheme.typography.labelLarge) } },
         )
     }
 

@@ -1,6 +1,11 @@
 package com.motionlab.app
 
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -52,6 +57,15 @@ class LiveSyncBridgeFlowTest {
             val exports = JSONObject(call("/exports?t=$token").second)
             assertTrue(exports.getJSONObject("swift").getString("code").isNotBlank())
             assertTrue(JSONObject(call("/spec?t=$token").second).has("spring"))
+
+            // The QR sheet shows a scannable code for a fresh pre-paired link.
+            composeTestRule.onNodeWithTag("showQr").performScrollTo().performClick()
+            composeTestRule.waitUntil(5_000) { composeTestRule.onAllNodesWithTag("qrImage").fetchSemanticsNodes().isNotEmpty() }
+            composeTestRule.onNodeWithTag("qrImage").assertIsDisplayed()
+            // Keep the rendered pixels so an outside decoder can confirm it really scans.
+            val shot = composeTestRule.onNodeWithTag("qrImage").captureToImage().asAndroidBitmap()
+            val ctx = androidx.test.platform.app.InstrumentationRegistry.getInstrumentation().targetContext
+            java.io.File(ctx.getExternalFilesDir(null), "qr-on-screen.png").outputStream().use { shot.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
         } finally {
             LiveSync.stop()
         }
