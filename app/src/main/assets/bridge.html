@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Motion Lab bridge</title>
+<style>
+  :root {
+    --canvas: #F7F6F3; --surface: #FFFFFF; --line: #E7E5E0;
+    --ink: #141413; --ink-soft: #6F6D67; --ink-faint: #A9A7A1;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --canvas: #131312; --surface: #1B1B1A; --line: #2C2C2A; --ink: #EEECE7; --ink-soft: #9A978F; --ink-faint: #66645F; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--canvas); color: var(--ink); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 56px 24px 96px; }
+  h1 { font-size: 28px; letter-spacing: -0.03em; font-weight: 600; margin: 0 0 8px; }
+  p.lede { color: var(--ink-soft); margin: 0 0 32px; max-width: 46ch; }
+  .label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); padding-bottom: 8px; border-bottom: 1px solid var(--line); margin: 36px 0 14px; display: flex; justify-content: space-between; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  input { font: 22px var(--mono); letter-spacing: 0.4em; width: 8.5em; padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--canvas); color: var(--ink); }
+  button { font: inherit; font-size: 13px; padding: 9px 16px; border-radius: 10px; border: 1px solid var(--ink); background: var(--ink); color: var(--canvas); cursor: pointer; }
+  button.quiet { background: transparent; color: var(--ink); border-color: var(--line); }
+  button:hover { opacity: .88; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .msg { color: var(--ink-soft); font-size: 13px; min-height: 20px; margin-top: 10px; }
+  .stats { display: flex; gap: 28px; flex-wrap: wrap; font-family: var(--mono); font-size: 13px; }
+  .stats b { display: block; font-weight: 500; color: var(--ink-soft); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; font-family: system-ui, sans-serif; }
+  .tabs { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tab { padding: 6px 12px; border: 1px solid var(--line); border-radius: 10px; background: transparent; color: var(--ink); font-size: 12.5px; }
+  .tab.on { background: var(--ink); color: var(--canvas); border-color: var(--ink); }
+  pre { margin: 0; padding: 16px; max-height: 480px; overflow: auto; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; font: 12px/1.6 var(--mono); white-space: pre; }
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--ink-faint); margin-right: 8px; }
+  .dot.live { background: var(--ink); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+  @media (prefers-reduced-motion: reduce) { .dot.live { animation: none; } }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Motion Lab bridge</h1>
+  <p class="lede">Tune on the phone, take the code here. Every export follows the sliders as you change them.</p>
+
+  <section id="pair" class="card" hidden>
+    <div class="label" style="margin-top:0">Pair</div>
+    <p style="margin:0 0 14px;color:var(--ink-soft)">Type the 4-digit code shown in Motion Lab under Export, Live sync.</p>
+    <form class="row" id="pairForm">
+      <input id="code" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000" aria-label="Pairing code" />
+      <button type="submit">Connect</button>
+    </form>
+    <div class="msg" id="pairMsg" role="status"></div>
+  </section>
+
+  <section id="live" hidden>
+    <div class="label"><span><span class="dot" id="dot"></span><span id="status">Connecting</span></span><span id="name"></span></div>
+    <div class="card"><div class="stats" id="stats"></div></div>
+
+    <div class="label">Code</div>
+    <div class="tabs" id="tabs" role="tablist"></div>
+    <pre id="code-view" tabindex="0"></pre>
+    <div class="row" style="margin-top:12px">
+      <button id="copy">Copy</button>
+      <button id="download" class="quiet">Download</button>
+      <button id="unpair" class="quiet" style="margin-left:auto">Disconnect</button>
+    </div>
+    <div class="msg" id="copyMsg" role="status"></div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const KEY = "motionlab-bridge-token";
+  let token = null, es = null, exportsData = {}, current = null, spec = null;
+
+  const store = {
+    get() { try { return sessionStorage.getItem(KEY); } catch (_) { return null; } },
+    set(v) { try { v ? sessionStorage.setItem(KEY, v) : sessionStorage.removeItem(KEY); } catch (_) {} },
+  };
+
+  function showPair(message) {
+    if (es) { es.close(); es = null; }
+    token = null; store.set(null);
+    $("live").hidden = true; $("pair").hidden = false;
+    $("pairMsg").textContent = message || "";
+    $("code").focus();
+  }
+
+  function start(t) {
+    token = t; store.set(t);
+    $("pair").hidden = true; $("live").hidden = false;
+    connect();
+  }
+
+  function connect() {
+    if (es) es.close();
+    es = new EventSource("/events?t=" + encodeURIComponent(token));
+    es.onopen = () => { $("dot").className = "dot live"; $("status").textContent = "Live"; };
+    es.onmessage = (e) => { try { spec = JSON.parse(e.data); } catch (_) { return; } render(); refreshExports(); };
+    es.onerror = async () => {
+      $("dot").className = "dot"; $("status").textContent = "Reconnecting";
+      // A dead token (sync restarted, 30 minutes passed) shows as 401 on a plain fetch.
+      try { const r = await fetch("/spec?t=" + encodeURIComponent(token)); if (r.status === 401) showPair("That session ended. Enter the code again."); } catch (_) {}
+    };
+  }
+
+  async function refreshExports() {
+    try {
+      const r = await fetch("/exports?t=" + encodeURIComponent(token));
+      if (r.status === 401) return showPair("That session ended. Enter the code again.");
+      exportsData = await r.json();
+      renderTabs();
+    } catch (_) {}
+  }
+
+  function stat(label, value) { return `<div><b>${label}</b>${value}</div>`; }
+
+  function render() {
+    if (!spec || !spec.spring) return;
+    const s = spec.spring;
+    $("name").textContent = spec.name ? `${spec.name}${spec.interaction ? " · " + spec.interaction : ""}` : "";
+    $("stats").innerHTML =
+      stat("Stiffness", s.stiffness) + stat("Damping", s.damping) + stat("Ratio", s.dampingRatio) +
+      stat("Settle", s.settleMs + " ms") + stat("Overshoot", s.overshootPercent + "%");
+  }
+
+  function renderTabs() {
+    const keys = Object.keys(exportsData);
+    if (!keys.length) { $("code-view").textContent = "Nothing to show yet: open an experiment on the phone."; $("tabs").innerHTML = ""; return; }
+    if (!current || !exportsData[current]) current = keys[0];
+    $("tabs").innerHTML = "";
+    keys.forEach((k) => {
+      const b = document.createElement("button");
+      b.className = "tab" + (k === current ? " on" : "");
+      b.setAttribute("role", "tab"); b.setAttribute("aria-selected", k === current);
+      b.textContent = exportsData[k].label;
+      b.onclick = () => { current = k; renderTabs(); };
+      $("tabs").appendChild(b);
+    });
+    $("code-view").textContent = exportsData[current].code;
+  }
+
+  $("copy").onclick = async () => {
+    const text = current && exportsData[current] ? exportsData[current].code : "";
+    try { await navigator.clipboard.writeText(text); $("copyMsg").textContent = "Copied."; }
+    catch (_) { const r = document.createRange(); r.selectNodeContents($("code-view")); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); $("copyMsg").textContent = "Selected. Press Ctrl/Cmd+C."; }
+    setTimeout(() => ($("copyMsg").textContent = ""), 2500);
+  };
+  $("download").onclick = () => {
+    if (!current || !exportsData[current]) return;
+    const e = exportsData[current];
+    const base = ((spec && spec.name) || "motion").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "motion";
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([e.code], { type: "text/plain" }));
+    a.download = `${base}-${current}.${e.ext || "txt"}`;
+    a.click(); URL.revokeObjectURL(a.href);
+  };
+  $("unpair").onclick = () => showPair("");
+
+  $("pairForm").onsubmit = async (ev) => {
+    ev.preventDefault();
+    const code = $("code").value.trim();
+    if (!/^\d{4}$/.test(code)) { $("pairMsg").textContent = "The code is 4 digits."; return; }
+    try {
+      const r = await fetch("/pair", { method: "POST", body: code });
+      const j = await r.json();
+      if (r.ok) return start(j.token);
+      $("pairMsg").textContent = r.status === 429
+        ? `Too many wrong codes. The code on the phone has changed; try again in ${Math.ceil((j.retryMs || 30000) / 1000)} s.`
+        : "That is not the code on the phone.";
+    } catch (_) { $("pairMsg").textContent = "Can't reach the phone. Same Wi-Fi, and is live sync on?"; }
+  };
+
+  // A link from the phone carries its own token: pair without typing.
+  const fromLink = new URLSearchParams(location.search).get("t");
+  if (fromLink) { history.replaceState(null, "", location.pathname); start(fromLink); }
+  else if (store.get()) start(store.get());
+  else showPair("");
+})();
+</script>
+</body>
+</html>

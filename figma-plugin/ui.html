@@ -1,0 +1,48 @@
+<!doctype html>
+<meta charset="utf-8" />
+<style>
+  body { font: 12px system-ui, sans-serif; margin: 12px; color: #141413; }
+  textarea { width: 100%; height: 150px; box-sizing: border-box; font: 11px ui-monospace, monospace; }
+  input { width: 100%; box-sizing: border-box; margin: 4px 0 8px; }
+  button { margin: 6px 6px 0 0; padding: 6px 10px; }
+  #status { margin-top: 10px; color: #6f6d67; min-height: 32px; }
+  h4 { margin: 12px 0 4px; }
+</style>
+<h4>Paste a spec</h4>
+<textarea id="spec" placeholder='Paste Motion Lab "Motion spec" JSON here'></textarea>
+<button id="apply">Apply to selection</button>
+
+<h4>Or follow live sync</h4>
+<input id="url" placeholder="http://192.168.1.20:8787" />
+<input id="code" placeholder="4-digit pairing code" inputmode="numeric" maxlength="4" />
+<button id="connect">Connect</button><button id="disconnect">Disconnect</button>
+<div id="status"></div>
+
+<script>
+  let es = null;
+  const status = (t) => (document.getElementById("status").textContent = t);
+  const send = (spec) => parent.postMessage({ pluginMessage: { type: "apply", spec } }, "*");
+
+  document.getElementById("apply").onclick = () => {
+    try { send(JSON.parse(document.getElementById("spec").value)); }
+    catch (e) { status("That is not valid JSON."); }
+  };
+  document.getElementById("connect").onclick = async () => {
+    if (es) es.close();
+    const base = document.getElementById("url").value.replace(/\/+$/, "");
+    const code = document.getElementById("code").value.trim();
+    let token;
+    try {
+      const r = await fetch(base + "/pair", { method: "POST", body: code });
+      const j = await r.json();
+      if (!r.ok) return status(r.status === 429 ? "Too many wrong codes. The code in the app has changed; wait a few seconds." : "That is not the code shown in the app.");
+      token = j.token;
+    } catch (_) { return status("Can't reach " + base + ". Same Wi-Fi? Live sync started?"); }
+    es = new EventSource(base + "/events?t=" + encodeURIComponent(token));
+    es.onopen = () => status("Connected. Change a slider in the app; select layers here to apply.");
+    es.onmessage = (e) => { try { send(JSON.parse(e.data)); } catch (_) {} };
+    es.onerror = () => status("Connection lost. Live sync stopped, or the session ended: press Connect again.");
+  };
+  document.getElementById("disconnect").onclick = () => { if (es) es.close(); es = null; status("Disconnected."); };
+  window.onmessage = (e) => { const m = e.data.pluginMessage; if (m && m.type === "status") status(m.text); };
+</script>

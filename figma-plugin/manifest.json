@@ -1,0 +1,13 @@
+{
+  "name": "Motion Lab spring",
+  "id": "motion-lab-spring-local",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["*"],
+    "reasoning": "Optional: reads the spring from a Motion Lab device on your local network (live sync)."
+  }
+}
