@@ -34,3 +34,27 @@ class MotionTokenExporterTest {
         }
     }
 }
+
+class TokenIdentifierTest {
+    private fun t(name: String) = com.motionlab.app.data.MotionTokenEntity(name = name, stiffness = 500f, dampingRatio = 0.8f, createdAt = 0)
+    private val fmt = com.motionlab.app.export.MotionTokenExporter.Format.entries
+
+    @org.junit.Test fun `names that are not valid identifiers are made valid`() {
+        val e = com.motionlab.app.export.MotionTokenExporter
+        org.junit.Assert.assertEquals("_3dTap", e.camel("3d-tap"))
+        org.junit.Assert.assertEquals("objectSpring", e.camel("object"))
+        org.junit.Assert.assertEquals("defaultSpring", e.camel("Default"))
+        org.junit.Assert.assertEquals("bigBounce2", e.camel("Big Bounce 2"))
+        org.junit.Assert.assertEquals("spring", e.camel("!!!"))
+    }
+
+    @org.junit.Test fun `two names that collapse to the same identifier both survive in every format`() {
+        val tokens = listOf(t("Big Bounce"), t("big-bounce"))
+        val kotlin = com.motionlab.app.export.MotionTokenExporter.export(tokens, com.motionlab.app.export.MotionTokenExporter.Format.KOTLIN)
+        org.junit.Assert.assertTrue(kotlin, kotlin.contains("fun bigBounce()") && kotlin.contains("fun bigBounce2()"))
+        val json = org.json.JSONObject(com.motionlab.app.export.MotionTokenExporter.json(tokens)).getJSONObject("motion")
+        org.junit.Assert.assertEquals(2, json.length())
+        val css = com.motionlab.app.export.MotionTokenExporter.export(tokens, com.motionlab.app.export.MotionTokenExporter.Format.CSS)
+        org.junit.Assert.assertTrue(css.contains("--motion-big-bounce-duration") && css.contains("--motion-big-bounce2-duration"))
+    }
+}
