@@ -121,7 +121,9 @@
   function render() {
     if (!spec || !spec.spring) return;
     const s = spec.spring;
-    $("name").textContent = spec.name ? `${spec.name}${spec.interaction ? " · " + spec.interaction : ""}` : "";
+    const kind = (spec.interaction || "").replace(/_/g, " ");
+    // Experiments are often named after their type; don't say it twice.
+    $("name").textContent = spec.name ? (kind && kind.toLowerCase() !== String(spec.name).toLowerCase() ? `${spec.name} · ${kind}` : spec.name) : "";
     $("stats").innerHTML =
       stat("Stiffness", s.stiffness) + stat("Damping", s.damping) + stat("Ratio", s.dampingRatio) +
       stat("Settle", s.settleMs + " ms") + stat("Overshoot", s.overshootPercent + "%");
