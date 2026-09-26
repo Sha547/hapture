@@ -147,8 +147,8 @@ Important rule: `INSERT OR REPLACE` is only used for brand-new rows. Updating an
 
 ## 13. Tests
 
-- **250 unit tests** (JVM): physics solvers, spec, lint, generators, Lottie structure, fitter, tracker, codecs, live sync server, token exporter, doodle geometry and SVG.
-- **55 instrumented tests** (on a real emulator): every migration step, cascade deletes, pin and undo flows, haptic markers, all 12 interaction screens opening, doodle drawing flow, trigger interactions, token saving, draw-based capture, and the **video pipeline decoding a real encoded mp4 of a known spring**.
+- **257 unit tests** (JVM): physics solvers, spec, lint, generators, Lottie structure, fitter, tracker, codecs, live sync server, token exporter, doodle geometry and SVG.
+- **57 instrumented tests** (on a real emulator): every migration step, cascade deletes, pin and undo flows, haptic markers, all 12 interaction screens opening, doodle drawing flow, trigger interactions, token saving, draw-based capture, and the **video pipeline decoding a real encoded mp4 of a known spring**.
 
 ## 14. Known limits
 
@@ -172,3 +172,7 @@ Important rule: `INSERT OR REPLACE` is only used for brand-new rows. Updating an
 - **Feel sets**: built-in archetypes and your own bundles; add to tokens or copy as code. **Drift check**: code exports carry a signature stamp; paste code back to see if it was edited or is out of date.
 - **Timeline video**: portrait 720x1280 H.264 MP4 with haptic ticks lit as they fire, shared from the timeline's Export section.
 - v13 migration: `token_sets`, `token_set_items`, `experiment_backdrops`, and five nullable `chain*` columns on `experiments`.
+
+## 16. Motion in the app's own UI
+
+Screens slide and fade a little when opened or left (spring-driven, a tenth of the width), Home rows ease in when added and out when deleted (the real delete runs after the exit, so Undo and the data change together), and buttons, chips and links press in a hair. Everything checks `LocalReduceMotion`, which follows the phone's "remove animations" setting and turns all of it into plain cuts. The tuning demos are exempt: moving is their job. The reduce-motion flag is read once at launch.

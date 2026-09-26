@@ -75,8 +75,10 @@ import kotlinx.coroutines.delay
  * only, so it never triggers layout.
  */
 fun Modifier.reveal(index: Int = 0): Modifier = composed {
-    val progress = remember { Animatable(0f) }
+    val reduce = LocalReduceMotion.current
+    val progress = remember { Animatable(if (reduce) 1f else 0f) }
     LaunchedEffect(Unit) {
+        if (reduce) return@LaunchedEffect
         delay(index * 70L)
         progress.animateTo(1f, tween(600, easing = CubicBezierEasing(0.16f, 1f, 0.3f, 1f)))
     }
@@ -161,19 +163,11 @@ fun Hairline(modifier: Modifier = Modifier) {
 @Composable
 fun PrimaryButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: IconKind? = null) {
     val t = LocalTokens.current
-    val source = remember { MutableInteractionSource() }
-    val pressed by source.collectIsPressedAsState()
-    val scale by animateFloatAsState(
-        targetValue = if (pressed) 0.98f else 1f,
-        animationSpec = spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessMedium),
-        label = "pressScale",
-    )
     Row(
         modifier = modifier
-            .graphicsLayer { scaleX = scale; scaleY = scale }
+            .pressable(onClick, scaleTo = 0.98f)
             .clip(RoundedCornerShape(t.radiusControl))
             .background(t.ink)
-            .clickable(interactionSource = source, indication = null, onClick = onClick)
             .padding(horizontal = 20.dp, vertical = 15.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
@@ -192,8 +186,8 @@ fun TextLink(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, 
     val t = LocalTokens.current
     Row(
         modifier = modifier
+            .pressable(onClick, scaleTo = 0.97f)
             .clip(RoundedCornerShape(6.dp))
-            .clickable(onClick = onClick)
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -212,10 +206,10 @@ fun Chip(label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifi
     val shape = RoundedCornerShape(t.radiusControl)
     Box(
         modifier = modifier
+            .pressable(onClick, scaleTo = 0.96f)
             .clip(shape)
             .background(fill)
             .border(t.hairline, border, shape)
-            .clickable(onClick = onClick)
             .padding(horizontal = 14.dp, vertical = 8.dp),
         contentAlignment = Alignment.Center,
     ) { Text(label, style = MaterialTheme.typography.labelMedium, color = text) }

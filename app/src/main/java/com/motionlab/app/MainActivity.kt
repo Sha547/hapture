@@ -6,6 +6,25 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.background
+import androidx.compose.animation.ContentTransform
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.VisibilityThreshold
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
+import androidx.compose.ui.unit.IntOffset
+import com.motionlab.app.ui.design.LocalReduceMotion
+import com.motionlab.app.ui.design.isMotionReduced
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -83,6 +102,18 @@ import kotlinx.coroutines.launch
  * is the first thing that references another saved item rather than just
  * holding its own state; still doesn't need real deep-linkable routes.
  */
+/**
+ * Opening a screen slides it in a little from the right while it fades in, and going back reverses that.
+ * Small on purpose (a tenth of the width) and driven by a spring; with Reduce Motion it is a plain cut.
+ */
+private fun screenTransition(toHome: Boolean, reduce: Boolean): ContentTransform {
+    if (reduce) return EnterTransition.None togetherWith ExitTransition.None
+    val dir = if (toHome) -1 else 1
+    val slide = spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = IntOffset.VisibilityThreshold)
+    return (fadeIn(tween(200)) + slideInHorizontally(slide) { dir * it / 10 }) togetherWith
+        (fadeOut(tween(120)) + slideOutHorizontally(slide) { -dir * it / 10 })
+}
+
 private sealed interface Route {
     data object Home : Route
     data object NewExperiment : Route
@@ -115,6 +146,9 @@ class MainActivity : ComponentActivity() {
         val compareStore = CompareStore(applicationContext)
 
         setContent {
+            val reduceMotion = remember {
+                isMotionReduced(android.provider.Settings.Global.getFloat(contentResolver, android.provider.Settings.Global.ANIMATOR_DURATION_SCALE, 1f))
+            }
             var picked by remember { mutableStateOf(themeStore.load()) }
             val themeId = picked ?: defaultThemeId()
 
@@ -135,6 +169,7 @@ class MainActivity : ComponentActivity() {
                 val tokens by tokenRepository.observeAll().collectAsState(initial = emptyList<MotionTokenEntity>())
 
                 CompositionLocalProvider(
+                    LocalReduceMotion provides reduceMotion,
                     LocalMotionTokens provides tokens,
                     LocalSaveMotionToken provides { n, k, z -> scope.launch { tokenRepository.save(n, k, z) } },
                 ) {
@@ -142,7 +177,14 @@ class MainActivity : ComponentActivity() {
                     route = Route.Home
                 }
 
-                when (val current = route) {
+                // The canvas colour sits behind the transition, or the fade and slide would show the black window underneath.
+                AnimatedContent(
+                    modifier = Modifier.fillMaxSize().background(com.motionlab.app.ui.design.LocalTokens.current.canvas),
+                    targetState = route,
+                    transitionSpec = { screenTransition(toHome = targetState is Route.Home, reduce = reduceMotion) },
+                    label = "screen",
+                ) { current ->
+                when (current) {
                     is Route.Home -> {
                         val experiments by repository.observeAll()
                             .collectAsState(initial = emptyList<ExperimentEntity>())
@@ -321,6 +363,7 @@ class MainActivity : ComponentActivity() {
                         experimentRepository = repository,
                         onBack = { route = Route.Home },
                     )
+                }
                 }
                 }
             }

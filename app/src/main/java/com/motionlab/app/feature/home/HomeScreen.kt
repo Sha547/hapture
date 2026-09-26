@@ -26,6 +26,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.key
+import com.motionlab.app.ui.design.ListItemMotion
+import com.motionlab.app.ui.design.LocalReduceMotion
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -120,6 +124,33 @@ fun HomeScreen(
     val now = remember(recent) { System.currentTimeMillis() }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    // Rows ease in when added and ease out when deleted. Rows that were already on screen when Home opened
+    // just appear, so opening Home doesn't animate everything at once.
+    val reduceMotion = LocalReduceMotion.current
+    var leaving by remember { mutableStateOf(setOf<String>()) }
+    val knownRows = remember { mutableSetOf<String>() }
+    var settled by remember { mutableStateOf(false) }
+    val rowKeys = recent.map { "e${it.id}" } + timelines.map { "t${it.id}" } + doodles.map { "d${it.id}" } + tokens.map { "k${it.id}" }
+    val latestKeys by rememberUpdatedState(rowKeys)
+    LaunchedEffect(Unit) {
+        delay(600)
+        knownRows += latestKeys
+        settled = true
+    }
+    fun isNew(key: String) = settled && key !in knownRows
+
+    /** Plays the row's exit, then does the real delete, so the Undo bar and the data change together. */
+    fun leave(key: String, then: () -> Unit) {
+        scope.launch {
+            if (!reduceMotion) {
+                leaving = leaving + key
+                delay(220)
+            }
+            then()
+            leaving = leaving - key
+        }
+    }
     var notice by remember { mutableStateOf<String?>(null) }
     var exporting by remember { mutableStateOf<ExperimentEntity?>(null) }
     LaunchedEffect(notice) {
@@ -221,6 +252,7 @@ fun HomeScreen(
                 Text("Nothing here yet.", style = MaterialTheme.typography.bodyMedium, color = t.inkSoft)
             }
             recent.forEach { item ->
+                key(item.id) { ListItemMotion(animateIn = isNew("e${item.id}"), leaving = "e${item.id}" in leaving) {
                 ListRow(
                     title = item.name,
                     subtitle = "${item.type.label}  /  ${relativeTime(now, item.updatedAt)}",
@@ -240,6 +272,7 @@ fun HomeScreen(
                     onClick = { onOpen(item) },
                     onLongClick = { managing = item },
                 )
+                } }
             }
             Spacer(Modifier.height(8.dp))
             TextLink(
@@ -262,6 +295,7 @@ fun HomeScreen(
                 Spacer(Modifier.height(16.dp))
             }
             timelines.forEach { tl ->
+                key(tl.id) { ListItemMotion(animateIn = isNew("t${tl.id}"), leaving = "t${tl.id}" in leaving) {
                 ListRow(
                     title = tl.name,
                     subtitle = "Timeline  /  ${relativeTime(now, tl.updatedAt)}",
@@ -270,6 +304,7 @@ fun HomeScreen(
                     onClick = { onOpenTimeline(tl) },
                     onLongClick = { managingTimeline = tl },
                 )
+                } }
             }
             Spacer(Modifier.height(8.dp))
             TextLink(label = "New timeline", icon = IconKind.PLUS, onClick = onNewTimeline)
@@ -298,6 +333,7 @@ fun HomeScreen(
                 Spacer(Modifier.height(16.dp))
             }
             doodles.forEach { d ->
+                key(d.id) { ListItemMotion(animateIn = isNew("d${d.id}"), leaving = "d${d.id}" in leaving) {
                 ListRow(
                     title = d.name,
                     subtitle = "Doodle  /  ${relativeTime(now, d.updatedAt)}",
@@ -306,6 +342,7 @@ fun HomeScreen(
                     onClick = { onOpenDoodle(d) },
                     onLongClick = { managingDoodle = d },
                 )
+                } }
             }
             Spacer(Modifier.height(8.dp))
             TextLink(label = "New doodle", icon = IconKind.PLUS, onClick = onNewDoodle)
@@ -322,6 +359,7 @@ fun HomeScreen(
                 )
             }
             tokens.forEach { tk ->
+                key(tk.id) { ListItemMotion(animateIn = isNew("k${tk.id}"), leaving = "k${tk.id}" in leaving) {
                 ListRow(
                     title = tk.name,
                     subtitle = "stiffness ${"%.0f".format(tk.stiffness)}  /  damping ratio ${"%.2f".format(tk.dampingRatio)}",
@@ -335,6 +373,7 @@ fun HomeScreen(
                     },
                     onLongClick = { managingToken = tk },
                 )
+                } }
             }
             if (tokens.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
@@ -359,8 +398,7 @@ fun HomeScreen(
                 managing = null
             },
             onDelete = {
-                onDelete(item)
-                recentlyDeleted = item
+                leave("e${item.id}") { onDelete(item); recentlyDeleted = item }
                 managing = null
             },
             onExport = {
@@ -384,7 +422,7 @@ fun HomeScreen(
             shape = RoundedCornerShape(t.radiusCard),
             title = { Text(tk.name, style = MaterialTheme.typography.titleLarge) },
             confirmButton = {
-                TextButton(onClick = { onDeleteToken(tk); managingToken = null }) {
+                TextButton(onClick = { leave("k${tk.id}") { onDeleteToken(tk) }; managingToken = null }) {
                     Text("Delete", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
                 }
             },
@@ -432,7 +470,7 @@ fun HomeScreen(
             },
             dismissButton = {
                 Row {
-                    TextButton(onClick = { onDeleteDoodle(item); deletedDoodle = item; managingDoodle = null }) {
+                    TextButton(onClick = { leave("d${item.id}") { onDeleteDoodle(item); deletedDoodle = item }; managingDoodle = null }) {
                         Text("Delete", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelLarge)
                     }
                     TextButton(onClick = { managingDoodle = null }) {
@@ -452,7 +490,7 @@ fun HomeScreen(
                 managingTimeline = null
             },
             onDelete = {
-                onDeleteTimeline(item)
+                leave("t${item.id}") { onDeleteTimeline(item) }
                 managingTimeline = null
             },
         )
