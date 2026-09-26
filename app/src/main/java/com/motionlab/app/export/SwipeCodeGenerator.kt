@@ -55,9 +55,11 @@ object SwipeCodeGenerator {
             |    val scope = rememberCoroutineScope()
             |
             |    Box(
-            |        modifier = modifier
+            |        // offset/scale first, so whatever look you pass in modifier (size, background) moves with it.
+            |        modifier = Modifier
             |            .offset { IntOffset(offsetX.value.roundToInt(), 0) }
             |            .graphicsLayer { rotationZ = tiltDegrees(offsetX.value, distance, maxTilt) }
+            |            .then(modifier)
             |            .pointerInput(Unit) {
             |                var raw = 0f
             |                val tracker = VelocityTracker()
@@ -66,7 +68,7 @@ object SwipeCodeGenerator {
             |                    onDrag = { change, dragAmount ->
             |                        change.consume()
             |                        raw += dragAmount.x
-            |                        tracker.addPosition(change.uptimeMillis, change.position)
+            |                        tracker.addPosition(change.uptimeMillis, Offset(raw, 0f)) // not change.position: that moves with the card and reads ~0
             |                        scope.launch { offsetX.snapTo(raw) }
             |                    },
             |                    onDragEnd = {

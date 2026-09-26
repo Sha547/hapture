@@ -181,7 +181,7 @@ fun PullRefreshScreen(
                                     change.consume()
                                     raw += dragAmount.y
                                     val k = ParameterMapping.resistance(resistanceT)
-                                    val visual = RubberBand.apply(raw, 0f, k).coerceAtLeast(0f)
+                                    val visual = PullRefreshSolver.visual(raw, k, triggerPx()).coerceAtLeast(0f)
                                     val nowCrossed = PullRefreshSolver.triggered(visual, triggerPx())
                                     if (nowCrossed != crossed) {
                                         crossed = nowCrossed

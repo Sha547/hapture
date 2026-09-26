@@ -47,8 +47,10 @@ object SpringCodeGenerator {
             |    val resistanceK = ${kStr}f
             |
             |    Box(
-            |        modifier = modifier
+            |        // offset/scale first, so whatever look you pass in modifier (size, background) moves with it.
+            |        modifier = Modifier
             |            .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+            |            .then(modifier)
             |            .pointerInput(Unit) {
             |                var raw = 0f
             |                detectDragGestures(

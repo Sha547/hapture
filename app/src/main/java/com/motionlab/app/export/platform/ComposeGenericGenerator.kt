@@ -16,7 +16,7 @@ object ComposeGenericGenerator {
             } else ""
             delayed + "    val v$i by animateFloatAsState(if ($gate) ${n(t.to)}f else ${n(t.from)}f, spec, label = \"${t.property}\")"
         }.joinToString("\n")
-        val layer = spec.transitions.mapIndexed { i, t ->
+        val layer = spec.transitions.withIndex().filter { it.value.property != "progress" }.joinToString("; ") { (i, t) ->
             when (t.property) {
                 "scale" -> "scaleX = v$i; scaleY = v$i"
                 "offsetY" -> "translationY = v$i.dp.toPx()"
@@ -24,7 +24,10 @@ object ComposeGenericGenerator {
                 "rotation" -> "rotationZ = v$i"
                 else -> "translationX = v$i.dp.toPx()"
             }
-        }.joinToString("; ")
+        }
+        // "progress" is a 0..1 value with no single property to write to (a track fill, a colour blend): expose it, don't guess.
+        val progress = spec.transitions.withIndex().filter { it.value.property == "progress" }
+            .joinToString("") { (i, _) -> "    // v$i is the 0..1 progress: use it for a track colour, a fill or a custom drawing.\n" }
         return header(spec, "//") + """
             |import android.provider.Settings
             |import kotlinx.coroutines.delay
@@ -32,6 +35,7 @@ object ComposeGenericGenerator {
             |import androidx.compose.animation.core.spring
             |import androidx.compose.foundation.background
             |import androidx.compose.foundation.clickable
+            |import androidx.compose.foundation.layout.Box
             |import androidx.compose.foundation.layout.size
             |import androidx.compose.foundation.shape.RoundedCornerShape
             |import androidx.compose.runtime.*
@@ -44,20 +48,21 @@ object ComposeGenericGenerator {
             |
             |/** Usage skeleton: tap toggles; wire `active` to your own trigger. */
             |@Composable
-            |fun ${p}Demo() {
+            |fun ${p}Demo(modifier: Modifier = Modifier) {
             |    var active by remember { mutableStateOf(false) }
             |    val context = LocalContext.current
             |    // Reduced Motion: the system "remove animations" setting.
             |    val reduce = remember { Settings.Global.getFloat(context.contentResolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) == 0f }
             |    val spec = spring<Float>(dampingRatio = if (reduce) 1f else ${n(s.dampingRatio, 2)}f, stiffness = ${n(s.stiffness, 1)}f)
             |$states
-            |
-            |    Modifier
-            |        .size(96.dp)
-            |        .graphicsLayer { $layer }
-            |        .clip(RoundedCornerShape(24.dp))
-            |        .background(Color(0xFF141413))
-            |        .clickable { active = !active }
+            |$progress
+            |    Box(
+            |        modifier
+            |            .size(96.dp)${if (layer.isEmpty()) "" else "\n            |            .graphicsLayer { $layer }"}
+            |            .clip(RoundedCornerShape(24.dp))
+            |            .background(Color(0xFF141413))
+            |            .clickable { active = !active },
+            |    )
             |}
             |
             |// Haptic: ${spec.haptic}. LocalHapticFeedback.current.performHapticFeedback(HapticFeedbackType.TextHandleMove) at the trigger.

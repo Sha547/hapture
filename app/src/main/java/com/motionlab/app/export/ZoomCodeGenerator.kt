@@ -43,16 +43,24 @@ object ZoomCodeGenerator {
             |    val scope = rememberCoroutineScope()
             |
             |    Box(
-            |        modifier = modifier
+            |        // offset/scale first, so whatever look you pass in modifier (size, background) moves with it.
+            |        modifier = Modifier
             |            .graphicsLayer { scaleX = scale.value; scaleY = scale.value }
+            |            .then(modifier)
             |            .pointerInput(Unit) {
-            |                while (true) {
+            |                awaitEachGesture {
+            |                    awaitFirstDown(requireUnconsumed = false)
             |                    var raw = scale.value
-            |                    detectTransformGestures { _, _, zoom, _ ->
-            |                        raw *= zoom
-            |                        val visual = visualScale(raw, min, max, resistanceK)
-            |                        scope.launch { scale.snapTo(visual) }
-            |                    }
+            |                    do {
+            |                        val event = awaitPointerEvent()
+            |                        val zoom = event.calculateZoom()
+            |                        if (zoom != 1f) {
+            |                            raw *= zoom
+            |                            scope.launch { scale.snapTo(visualScale(raw, min, max, resistanceK)) }
+            |                            event.changes.forEach { if (it.positionChanged()) it.consume() }
+            |                        }
+            |                    } while (event.changes.any { it.pressed })
+            |                    // Every finger is up: settle back to 1x.
             |                    scope.launch {
             |                        scale.animateTo(1f, spring(dampingRatio = ${dampingStr}f, stiffness = ${stiffnessStr}f))
             |                    }
