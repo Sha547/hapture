@@ -337,8 +337,14 @@ fun Stage(
             }
             .border(t.hairline, t.line, shape),
         contentAlignment = Alignment.Center,
-        content = content,
-    )
+    ) {
+        content()
+        LocalBackdropAction.current?.let { open ->
+            Box(Modifier.align(Alignment.TopEnd).padding(10.dp)) {
+                Chip("Screenshot", selected = LocalBackdropActive.current, onClick = open, modifier = Modifier.testTag("backdropChip"))
+            }
+        }
+    }
 }
 
 /** Fill and border for an object, by role, so it follows the theme. */
@@ -372,6 +378,8 @@ fun ValueSlider(
     value: Float,
     onValueChange: (Float) -> Unit,
     onValueChangeFinished: (() -> Unit)? = null,
+    /** One plain-language line under the label, for a control whose name a newcomer wouldn't know. */
+    hint: String? = null,
 ) {
     val t = LocalTokens.current
     Column(Modifier.padding(vertical = 2.dp)) {
@@ -379,6 +387,7 @@ fun ValueSlider(
             Text(label, style = MaterialTheme.typography.bodyMedium, color = t.ink)
             Text("${(value * 100).toInt()}", style = MonoSmall, color = t.inkSoft)
         }
+        if (hint != null) Text(hint, style = MaterialTheme.typography.bodySmall, color = t.inkSoft)
         Slider(
             modifier = Modifier.testTag(sliderTestTag(label)),
             value = value,

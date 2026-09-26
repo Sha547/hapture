@@ -175,11 +175,12 @@ fun HomeScreen(
             Text("Motion Lab", style = MaterialTheme.typography.displayMedium, color = t.ink)
             Spacer(Modifier.height(18.dp))
             Text(
-                text = "Tune how an interaction feels on a real device, with real touch and haptics. " +
-                    "Then take the numbers and the code with you.",
+                text = "Tune how things move in an app, by feel. Then copy the code into your project.",
                 style = MaterialTheme.typography.bodyLarge,
                 color = t.inkSoft,
             )
+            Spacer(Modifier.height(24.dp))
+            HomeDemo()
             Spacer(Modifier.height(28.dp))
             PrimaryButton("New experiment", onClick = onNewExperiment, icon = IconKind.PLUS)
             Spacer(Modifier.height(4.dp))

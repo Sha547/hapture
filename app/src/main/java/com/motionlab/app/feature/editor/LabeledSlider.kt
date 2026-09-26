@@ -15,4 +15,16 @@ internal fun LabeledSlider(
     value: Float,
     onValueChange: (Float) -> Unit,
     onValueChangeFinished: (() -> Unit)? = null,
-) = ValueSlider(label, value, onValueChange, onValueChangeFinished)
+) = ValueSlider(label, value, onValueChange, onValueChangeFinished, hint = SliderHints.forLabel(label))
+
+/** Plain words for the two spring sliders every editor has, so nobody has to know what stiffness or damping mean. */
+internal object SliderHints {
+    const val STIFFNESS = "How fast it snaps back to rest."
+    const val DAMPING = "How much it bounces. Low bounces a lot, high doesn't bounce."
+
+    fun forLabel(label: String): String? = when (label) {
+        "Stiffness" -> STIFFNESS
+        "Damping" -> DAMPING
+        else -> null
+    }
+}

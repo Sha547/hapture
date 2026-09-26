@@ -34,6 +34,8 @@ import com.motionlab.app.data.BackdropRepository
 import com.motionlab.app.ui.design.Backdrop
 import com.motionlab.app.ui.design.Chip
 import com.motionlab.app.ui.design.LocalBackdrop
+import com.motionlab.app.ui.design.LocalBackdropAction
+import com.motionlab.app.ui.design.LocalBackdropActive
 import com.motionlab.app.ui.design.LocalTokens
 import com.motionlab.app.ui.design.ValueSlider
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +45,7 @@ import kotlinx.coroutines.withContext
 /**
  * Wraps an experiment's editor so its stage can show a screenshot of the person's own app behind the
  * moving object. Every editor draws through the shared Stage, so none of them changes: this loads the
- * image, provides it, and adds one small control at the top right.
+ * image, provides it, and the stage shows one small button for it in its own corner.
  */
 @Composable
 fun BackdropHost(experimentId: Long, repository: BackdropRepository, content: @Composable () -> Unit) {
@@ -63,13 +65,12 @@ fun BackdropHost(experimentId: Long, repository: BackdropRepository, content: @C
     }
     val backdrop = image?.let { Backdrop(it, focus) }
 
-    CompositionLocalProvider(LocalBackdrop provides backdrop) {
-        Box(Modifier.fillMaxSize()) {
-            content()
-            Box(Modifier.align(Alignment.TopEnd).systemBarsPadding().padding(top = 13.dp, end = 24.dp)) {
-                Chip("Screenshot", selected = backdrop != null, onClick = { open = true }, modifier = Modifier.testTag("backdropChip"))
-            }
-        }
+    CompositionLocalProvider(
+        LocalBackdrop provides backdrop,
+        LocalBackdropAction provides { open = true },
+        LocalBackdropActive provides (backdrop != null),
+    ) {
+        content()
     }
 
     if (open) {
