@@ -1,5 +1,6 @@
 package com.motionlab.app.feature.editor
 
+import com.motionlab.app.core.spec.SpringSpec
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.detectTransformGestures
@@ -116,6 +117,20 @@ fun PinchZoomScreen(
         persist()
     }
 
+    fun applySpring(s: Float, d: Float) {
+        stiffnessT = s
+        dampingT = d
+        selectedPreset = null
+        persist()
+    }
+
+    fun applyHaptic(p: HapticPreset) {
+        hapticPreset = p
+        haptics.preset = p
+        haptics.preview(p)
+        persist()
+    }
+
     fun minScale() = ParameterMapping.zoomMinScale(minT)
     fun maxScale() = ParameterMapping.zoomMaxScale(maxT)
 
@@ -146,10 +161,11 @@ fun PinchZoomScreen(
         "${SpringMath.settleMs(k, z)} ms  /  ${(SpringMath.overshoot(z) * 100).roundToInt()}% overshoot"
     }
 
-    AppScreen(scrollable = true) {
-        TopBar(title = "Pinch to zoom", onBack = onBack)
-        Spacer(Modifier.height(8.dp))
-
+    EditorScaffold(
+        title = "Pinch to zoom",
+        onBack = onBack,
+        spring = SpringSpec(ParameterMapping.stiffness(stiffnessT), ParameterMapping.dampingRatio(dampingT)),
+        stage = {
         Column(Modifier.reveal(0)) {
             Stage {
                 StageObject(
@@ -188,12 +204,18 @@ fun PinchZoomScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = tokens.inkSoft,
             )
-            Spacer(Modifier.height(40.dp))
         }
-
+        },
+        controls = {
         EditorSection("Presets", 1) {
-            PresetRow(selected = selectedPreset, onSelect = ::applyPreset)
-            TokenRow { s, d -> stiffnessT = s; dampingT = d; selectedPreset = null; persist() }
+            SpringPresets(
+                name = loaded?.name ?: "",
+                stiffnessT = stiffnessT,
+                dampingT = dampingT,
+                selected = selectedPreset,
+                onPreset = ::applyPreset,
+                onSpring = ::applySpring,
+            )
         }
 
         EditorSection("Motion", 2) {
@@ -217,12 +239,7 @@ fun PinchZoomScreen(
         }
 
         EditorSection("Haptics", 4) {
-            HapticControls(preset = hapticPreset, onSelect = {
-                hapticPreset = it
-                haptics.preset = it
-                haptics.preview(it)
-                persist()
-            })
+            HapticControls(preset = hapticPreset, onSelect = ::applyHaptic)
         }
 
         EditorSection("Curve", 5, trailing = readout) {
@@ -230,8 +247,10 @@ fun PinchZoomScreen(
         }
 
         val name = loaded?.name ?: "Pinch to Zoom"
-        EditorSection("Export", 6, gap = 0.dp) {
+        Column(Modifier.reveal(6)) {
             ExportPanel(
+                onApplySpring = ::applySpring,
+                onApplyHaptic = ::applyHaptic,
                 compose = {
                     ZoomCodeGenerator.generate(
                         stiffness = ParameterMapping.stiffness(stiffnessT),
@@ -263,5 +282,6 @@ fun PinchZoomScreen(
             )
         }
         Spacer(Modifier.height(24.dp))
-    }
+        },
+    )
 }

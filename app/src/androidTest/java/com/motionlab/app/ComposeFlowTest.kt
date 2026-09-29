@@ -88,7 +88,7 @@ class ComposeFlowTest {
     fun everyInteractionTypeOpensAndShowsItsExportSectionWithoutCrashing() {
         val types = listOf(
             "Spring drag", "Magnetic snap", "Swipe and fling", "Bottom sheet",
-            "Pull to refresh", "Pinch to zoom", "Drag to reorder",
+            "Pull to refresh", "Pinch to zoom", "Predictive back", "Drag to reorder",
             "Toggle", "Button press", "Tab indicator", "Staggered list", "Like burst",
         )
         for (type in types) {
@@ -101,7 +101,7 @@ class ComposeFlowTest {
             // real navigation, real Room load, real haptics engine init, no exception.
             composeTestRule.onNodeWithText("Compose code").assertExists()
 
-            composeTestRule.onNodeWithTag("backButton").performScrollTo().performClick()
+            composeTestRule.onNodeWithTag("backButton").performClick()
             composeTestRule.waitForIdle()
         }
     }

@@ -54,6 +54,7 @@ class ExperimentRepository(private val dao: ExperimentDao) {
             ExperimentType.TAB_INDICATOR -> "Tab Indicator"
             ExperimentType.STAGGER_LIST -> "Staggered List"
             ExperimentType.LIKE_BURST -> "Like Burst"
+            ExperimentType.PREDICTIVE_BACK -> "Predictive Back"
         }
         val name = if (count == 0) baseName else "$baseName ${count + 1}"
         val now = System.currentTimeMillis()
@@ -133,6 +134,17 @@ class ExperimentRepository(private val dao: ExperimentDao) {
                 zoomMaxT = 0.5f,
                 // Larger, so the scale change actually reads clearly at rest.
                 objectSizeT = 0.7f,
+            )
+            ExperimentType.PREDICTIVE_BACK -> ExperimentEntity(
+                type = type,
+                name = name,
+                createdAt = now,
+                updatedAt = now,
+                // Material 3's standard default spatial spring (700, 0.9): what Android's own back uses.
+                stiffnessT = 0.22f,
+                dampingT = 0.556f,
+                backShrinkT = 0.5f,
+                backShiftT = 0.5f,
             )
             ExperimentType.DRAG_REORDER -> ExperimentEntity(
                 type = type,

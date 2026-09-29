@@ -18,6 +18,7 @@ val ExperimentType.label: String
         ExperimentType.TAB_INDICATOR -> "Tab indicator"
         ExperimentType.STAGGER_LIST -> "Staggered list"
         ExperimentType.LIKE_BURST -> "Like burst"
+        ExperimentType.PREDICTIVE_BACK -> "Predictive back"
     }
 
 val ExperimentType.icon: IconKind
@@ -34,4 +35,5 @@ val ExperimentType.icon: IconKind
         ExperimentType.TAB_INDICATOR -> IconKind.TABS
         ExperimentType.STAGGER_LIST -> IconKind.STAGGER
         ExperimentType.LIKE_BURST -> IconKind.HEART
+        ExperimentType.PREDICTIVE_BACK -> IconKind.BACK
     }

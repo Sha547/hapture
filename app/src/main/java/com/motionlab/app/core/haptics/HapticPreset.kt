@@ -3,6 +3,14 @@ package com.motionlab.app.core.haptics
 /** The physical sensations available (spec §24), lightest to heaviest, plus the two-beat success. */
 enum class HapticEffect { SOFT, TICK, CLICK, IMPACT, HEAVY, SUCCESS }
 
+/** How faithfully this phone can play an effect, worst first (so the weakest of several is the minimum). */
+enum class HapticSupport(val note: String) {
+    NONE("This phone has no vibration motor, so you won't feel it here. It's still saved and exported."),
+    APPROXIMATE("This phone can't play these exact effects; you'll feel a plainer buzz. Phones with better motors will feel the real thing."),
+    UNKNOWN("This phone doesn't report which effects it supports, so what you feel may be a plain buzz."),
+    EXACT("This phone plays this feel as designed."),
+}
+
 /**
  * A feel for the whole interaction: which sensation each [HapticEvent] gets.
  * Haptics are tied to interaction state (spec §17), so a preset is a table from

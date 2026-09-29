@@ -1,5 +1,6 @@
 package com.motionlab.app.feature.editor
 
+import com.motionlab.app.core.spec.SpringSpec
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
@@ -144,6 +145,20 @@ fun BottomSheetScreen(
         persist()
     }
 
+    fun applySpring(s: Float, d: Float) {
+        stiffnessT = s
+        dampingT = d
+        selectedPreset = null
+        persist()
+    }
+
+    fun applyHaptic(p: HapticPreset) {
+        hapticPreset = p
+        haptics.preset = p
+        haptics.preview(p)
+        persist()
+    }
+
     // Heights are "how much of the sheet is showing", px, measured from the stage's bottom edge.
     var stageHeightPx by remember { mutableFloatStateOf(with(density) { STAGE_HEIGHT_DP.toPx() }) }
     fun peekPx() = stageHeightPx * ParameterMapping.sheetPeekFraction(peekT)
@@ -187,10 +202,11 @@ fun BottomSheetScreen(
         "${SpringMath.settleMs(k, z)} ms  /  ${(SpringMath.overshoot(z) * 100).roundToInt()}% overshoot"
     }
 
-    AppScreen(scrollable = true) {
-        TopBar(title = "Bottom sheet", onBack = onBack)
-        Spacer(Modifier.height(8.dp))
-
+    EditorScaffold(
+        title = "Bottom sheet",
+        onBack = onBack,
+        spring = SpringSpec(ParameterMapping.stiffness(stiffnessT), ParameterMapping.dampingRatio(dampingT)),
+        stage = {
         Column(Modifier.reveal(0)) {
             Stage(Modifier.onSizeChanged { stageHeightPx = it.height.toFloat() }, height = STAGE_HEIGHT_DP) {
                 // Scrim that deepens as the sheet rises, then the detent guides on top of it.
@@ -331,9 +347,9 @@ fun BottomSheetScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = tokens.inkSoft,
             )
-            Spacer(Modifier.height(40.dp))
         }
-
+        },
+        controls = {
         EditorSection("Detents", 1) {
             LabeledSlider("Peek height", peekT, onValueChange = { peekT = it }, onValueChangeFinished = ::persist)
             LabeledSlider("Middle height", midT, onValueChange = { midT = it }, onValueChangeFinished = ::persist)
@@ -346,8 +362,14 @@ fun BottomSheetScreen(
         }
 
         EditorSection("Spring", 3) {
-            PresetRow(selected = selectedPreset, onSelect = ::applyPreset)
-            TokenRow { s, d -> stiffnessT = s; dampingT = d; selectedPreset = null; persist() }
+            SpringPresets(
+                name = loaded?.name ?: "",
+                stiffnessT = stiffnessT,
+                dampingT = dampingT,
+                selected = selectedPreset,
+                onPreset = ::applyPreset,
+                onSpring = ::applySpring,
+            )
             Spacer(Modifier.height(16.dp))
             LabeledSlider(
                 "Stiffness", stiffnessT,
@@ -366,12 +388,7 @@ fun BottomSheetScreen(
         }
 
         EditorSection("Haptics", 5) {
-            HapticControls(preset = hapticPreset, onSelect = {
-                hapticPreset = it
-                haptics.preset = it
-                haptics.preview(it)
-                persist()
-            })
+            HapticControls(preset = hapticPreset, onSelect = ::applyHaptic)
         }
 
         EditorSection("Curve", 6, trailing = readout) {
@@ -379,8 +396,10 @@ fun BottomSheetScreen(
         }
 
         val name = loaded?.name ?: "Bottom Sheet"
-        EditorSection("Export", 7, gap = 0.dp) {
+        Column(Modifier.reveal(7)) {
             ExportPanel(
+                onApplySpring = ::applySpring,
+                onApplyHaptic = ::applyHaptic,
                 compose = {
                     SheetCodeGenerator.generate(
                         stiffness = ParameterMapping.stiffness(stiffnessT),
@@ -419,7 +438,8 @@ fun BottomSheetScreen(
             )
         }
         Spacer(Modifier.height(24.dp))
-    }
+        },
+    )
 }
 
 private val STAGE_HEIGHT_DP = 300.dp

@@ -51,7 +51,7 @@ class MotionFlowTest {
         composeTestRule.onNodeWithText("Save").performClick()
         composeTestRule.waitForIdle()
 
-        composeTestRule.onNodeWithTag("backButton").performScrollTo().performClick()
+        composeTestRule.onNodeWithTag("backButton").performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithText("ci-token").performScrollTo().assertExists()
         composeTestRule.onNodeWithText("Copy tokens as code").performScrollTo().assertExists()
@@ -63,7 +63,7 @@ class MotionFlowTest {
             open(type)
             composeTestRule.onNodeWithTag(tag).performClick()
             composeTestRule.waitForIdle()
-            composeTestRule.onNodeWithTag("backButton").performScrollTo().performClick()
+            composeTestRule.onNodeWithTag("backButton").performClick()
             composeTestRule.waitForIdle()
         }
         open("Tab indicator")
@@ -114,7 +114,7 @@ class MotionFlowTest {
         composeTestRule.onNodeWithTag("chain_opacity").performScrollTo().performClick()
         composeTestRule.waitForIdle()
         composeTestRule.onNodeWithTag("followerTarget").assertExists()
-        composeTestRule.onNodeWithTag("triggerTarget").performScrollTo().performTouchInput { down(center); advanceEventTime(200); up() }
+        composeTestRule.onNodeWithTag("triggerTarget").performTouchInput { down(center); advanceEventTime(200); up() }
         composeTestRule.waitForIdle()
         // The follower is a second transition, exported like any other.
         composeTestRule.onNodeWithText("Motion spec").performScrollTo().assertExists()

@@ -1,6 +1,21 @@
 package com.motionlab.app.feature.editor
 
 import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import com.motionlab.app.core.haptics.HapticPreset
+import com.motionlab.app.core.physics.ParameterMapping
+import com.motionlab.app.core.spec.LintFix
+import com.motionlab.app.ui.design.TextLink
 import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.testTag
@@ -60,6 +75,10 @@ internal fun ExportPanel(
     spec: () -> String,
     css: () -> String,
     motion: (() -> MotionSpec)? = null,
+    /** Sets the editor's main spring, in slider positions. Given, checks that a spring change clears get a Fix button. */
+    onApplySpring: ((stiffnessT: Float, dampingT: Float) -> Unit)? = null,
+    /** Sets the editor's haptic preset, for the "haptics are off" check. */
+    onApplyHaptic: ((HapticPreset) -> Unit)? = null,
 ) {
     val t = LocalTokens.current
     val clipboard = LocalClipboardManager.current
@@ -86,6 +105,40 @@ internal fun ExportPanel(
         }
     }
     val issues = current()?.let { MotionLint.check(it) }.orEmpty()
+
+    // The last fix applied, with how to take it back. Clears itself after a while, like the Home undo bar.
+    var undo by remember { mutableStateOf<Pair<String, () -> Unit>?>(null) }
+    var noFix by remember { mutableStateOf<LintIssue.Rule?>(null) }
+    LaunchedEffect(undo) {
+        if (undo != null) {
+            delay(10_000)
+            undo = null
+        }
+    }
+
+    fun canFix(issue: LintIssue): Boolean = issue.fixLabel != null && when (issue.rule) {
+        LintIssue.Rule.NO_HAPTICS -> onApplyHaptic != null
+        null, LintIssue.Rule.STAGGER -> false
+        else -> onApplySpring != null
+    }
+
+    fun applyFix(issue: LintIssue) {
+        val spec = current() ?: return
+        val rule = issue.rule ?: return
+        when (val fix = MotionLint.fix(spec, rule)) {
+            is LintFix.Spring -> onApplySpring?.let { apply ->
+                val before = ParameterMapping.stiffnessT(spec.spring.stiffness) to ParameterMapping.dampingT(spec.spring.dampingRatio)
+                apply(ParameterMapping.stiffnessT(fix.stiffness), ParameterMapping.dampingT(fix.dampingRatio))
+                undo = issue.fixLabel.orEmpty() to { apply(before.first, before.second) }
+            }
+            is LintFix.Haptic -> onApplyHaptic?.let { apply ->
+                val before = HapticPreset.entries.firstOrNull { it.name.lowercase() == spec.haptic } ?: HapticPreset.OFF
+                apply(HapticPreset.entries.firstOrNull { it.name.lowercase() == fix.preset } ?: HapticPreset.CRISP)
+                undo = issue.fixLabel.orEmpty() to { apply(before) }
+            }
+            null -> noFix = rule
+        }
+    }
 
     @Composable
     fun copyRow(id: String, title: String, subtitle: String, text: () -> String) {
@@ -117,19 +170,53 @@ internal fun ExportPanel(
     }
 
     Column {
-        Text(
-            if (issues.isEmpty()) "Checks: no issues found." else "Checks",
-            style = MaterialTheme.typography.bodySmall,
-            color = t.inkSoft,
-        )
-        issues.forEach {
-            Text(
-                (if (it.level == LintIssue.Level.WARN) "Warning: " else "Note: ") + it.message,
-                style = MaterialTheme.typography.bodySmall,
-                color = t.ink,
-            )
+        SectionLabel("Checks", trailing = if (issues.isEmpty()) "all clear" else "${issues.size}")
+        Spacer(Modifier.height(12.dp))
+        if (issues.isEmpty() && undo == null) {
+            Text("Nothing a motion reviewer would flag.", style = MaterialTheme.typography.bodySmall, color = t.inkSoft)
         }
-        Spacer(Modifier.height(10.dp))
+        issues.forEach { issue ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp).testTag("lint_${issue.rule?.name?.lowercase()}"), verticalAlignment = Alignment.Top) {
+                Box(
+                    Modifier
+                        .padding(top = 6.dp)
+                        .size(6.dp)
+                        .background(if (issue.level == LintIssue.Level.WARN) t.ink else t.inkFaint, CircleShape),
+                )
+                Spacer(Modifier.width(10.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(issue.message, style = MaterialTheme.typography.bodySmall, color = if (issue.level == LintIssue.Level.WARN) t.ink else t.inkSoft)
+                    if (noFix == issue.rule) {
+                        Text("No spring in range fixes this; try the sliders.", style = MaterialTheme.typography.bodySmall, color = t.inkFaint)
+                    } else if (canFix(issue)) {
+                        TextLink(
+                            label = issue.fixLabel.orEmpty(),
+                            icon = IconKind.CHECK,
+                            onClick = { applyFix(issue) },
+                            modifier = Modifier.testTag("fix_${issue.rule?.name?.lowercase()}"),
+                        )
+                    }
+                }
+            }
+        }
+        undo?.let { (label, revert) ->
+            Row(Modifier.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Applied \u201c$label\u201d", style = MaterialTheme.typography.bodySmall, color = t.inkSoft)
+                Spacer(Modifier.width(12.dp))
+                Text(
+                    "Undo",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = t.ink,
+                    modifier = Modifier
+                        .testTag("undoFix")
+                        .clip(RoundedCornerShape(6.dp))
+                        .clickable { revert(); undo = null }
+                        .padding(horizontal = 6.dp, vertical = 4.dp),
+                )
+            }
+        }
+        Spacer(Modifier.height(28.dp))
+        SectionLabel("Code")
 
         copyRow("compose", "Compose code", "Kotlin spring() and gesture handling") { stamped(ExportStamp.Style.SLASH, compose()) }
         copyRow("spec", "Design spec", "JSON: Figma custom spring, CSS, object, theme", spec)

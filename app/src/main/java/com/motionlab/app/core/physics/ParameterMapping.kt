@@ -76,5 +76,11 @@ object ParameterMapping {
     /** 0f (must cross almost the whole item) .. 1f (a slight nudge swaps) -> swap threshold, as a fraction of item height */
     fun reorderThresholdFraction(t: Float): Float = lerp(0.85f, 0.2f, t.coerceIn(0f, 1f))
 
+    /** 0f (barely) .. 1f (a lot) -> the page's scale at a full back swipe. Material's own is 0.9. */
+    fun backMinScale(t: Float): Float = lerp(0.96f, 0.8f, t.coerceIn(0f, 1f))
+
+    /** 0f (stays centred) .. 1f (leans well over) -> sideways shift at a full swipe, as a fraction of the page width */
+    fun backShiftFraction(t: Float): Float = lerp(0f, 0.12f, t.coerceIn(0f, 1f))
+
     private fun lerp(a: Float, b: Float, t: Float): Float = a + (b - a) * t
 }

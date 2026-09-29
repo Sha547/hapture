@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -88,31 +89,47 @@ fun Modifier.reveal(index: Int = 0): Modifier = composed {
     }
 }
 
+/** The widest a single column of content gets, so lines stay readable on large screens. */
+val MAX_CONTENT_WIDTH = 680.dp
+
 /** Page: warm canvas with a faint light spot at the top, inside the system bars. */
 @Composable
 fun AppScreen(scrollable: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     val t = LocalTokens.current
     CompositionLocalProvider(LocalContentColor provides t.ink) {
+        // On a tablet or an unfolded foldable the page keeps a readable width, centred, instead of stretching.
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(t.canvas)
-                .drawBehind {
-                    drawRect(
-                        Brush.radialGradient(
-                            colors = listOf(t.ink.copy(alpha = if (t.dark) 0.05f else 0.035f), Color.Transparent),
-                            center = Offset(size.width * 0.85f, 0f),
-                            radius = size.width * 0.9f,
-                        )
-                    )
-                }
+                .canvasBackground(t)
                 .systemBarsPadding()
-                .then(if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier)
-                .padding(horizontal = 24.dp),
-            content = content,
-        )
+                .then(if (scrollable) Modifier.verticalScroll(rememberScrollState()) else Modifier),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = MAX_CONTENT_WIDTH)
+                    .fillMaxWidth()
+                    .then(if (scrollable) Modifier else Modifier.weight(1f))
+                    .padding(horizontal = 24.dp),
+                content = content,
+            )
+        }
     }
 }
+
+/** The page background every screen shares: the canvas colour with a faint light spot at the top right. */
+fun Modifier.canvasBackground(t: DesignTokens): Modifier = this
+    .background(t.canvas)
+    .drawBehind {
+        drawRect(
+            Brush.radialGradient(
+                colors = listOf(t.ink.copy(alpha = if (t.dark) 0.05f else 0.035f), Color.Transparent),
+                center = Offset(size.width * 0.85f, 0f),
+                radius = size.width * 0.9f,
+            )
+        )
+    }
 
 @Composable
 fun TopBar(title: String, onBack: (() -> Unit)? = null) {
@@ -374,12 +391,14 @@ fun ValueSlider(
     onValueChangeFinished: (() -> Unit)? = null,
     /** One plain-language line under the label, for a control whose name a newcomer wouldn't know. */
     hint: String? = null,
+    /** What the readout shows instead of the 0..100 position, when the slider stands for a real quantity. */
+    display: String? = null,
 ) {
     val t = LocalTokens.current
     Column(Modifier.padding(vertical = 2.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(label, style = MaterialTheme.typography.bodyMedium, color = t.ink)
-            Text("${(value * 100).toInt()}", style = MonoSmall, color = t.inkSoft)
+            Text(display ?: "${(value * 100).toInt()}", style = MonoSmall, color = t.inkSoft)
         }
         if (hint != null) Text(hint, style = MaterialTheme.typography.bodySmall, color = t.inkSoft)
         Slider(

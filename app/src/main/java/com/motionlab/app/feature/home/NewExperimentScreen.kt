@@ -79,6 +79,12 @@ fun NewExperimentScreen(
                 onClick = { onPick(ExperimentType.PINCH_ZOOM) },
             )
             ListRow(
+                title = "Predictive back", subtitle = "Android's back swipe: shrink, lean, spring",
+                leading = IconKind.BACK,
+                trailing = { AppIcon(IconKind.FORWARD, tint = t.inkSoft, size = 18.dp) },
+                onClick = { onPick(ExperimentType.PREDICTIVE_BACK) },
+            )
+            ListRow(
                 title = "Drag to reorder", subtitle = "Swap threshold, spring settle",
                 leading = IconKind.REORDER,
                 trailing = { AppIcon(IconKind.FORWARD, tint = t.inkSoft, size = 18.dp) },

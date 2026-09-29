@@ -6,11 +6,11 @@ The core idea: a motion is decided by a **trigger** (a drag, a tap, a press) and
 
 - Minimum Android 8.0 (API 26), target 35
 - Local-first: no account, no cloud, no onboarding wall
-- Storage: Room (SQLite), currently schema **v12**
+- Storage: Room (SQLite), currently schema **v14**
 
 ---
 
-## 1. Interaction types (12)
+## 1. Interaction types (13)
 
 ### Gesture-driven
 | Type | What you tune |
@@ -22,6 +22,7 @@ The core idea: a motion is decided by a **trigger** (a drag, a tap, a press) and
 | **Pull to refresh** | Trigger distance, hold time, continuous resistance |
 | **Pinch to zoom** | Min and max zoom, resistance, always settles back to 1x |
 | **Drag to reorder** | Swap threshold, spring settle of the dragged row |
+| **Predictive back** | Android's back swipe: how far the page shrinks and leans, and the spring that finishes or cancels it |
 
 ### Trigger-driven (tap or press)
 | Type | What moves |
@@ -32,7 +33,7 @@ The core idea: a motion is decided by a **trigger** (a drag, a tap, a press) and
 | **Staggered list** | Items arriving one after another (opacity and rise, per-item delay) |
 | **Like burst** | Heart pop with radial particles |
 
-Every type shares: stiffness and damping sliders (0..1, mapped to real engineering ranges), eight built-in presets (Gentle, Snappy, Heavy, Bouncy, Elastic, Gooey, Magnetic, Instant), haptic presets (Off, Soft, Crisp, Firm), a live position curve with settle time and overshoot readout, and an Export section.
+Every type shares: stiffness and damping sliders (showing the real stiffness and damping ratio), eight built-in presets (Gentle, Snappy, Heavy, Bouncy, Elastic, Gooey, Magnetic, Instant), Material 3's six spatial springs (standard and expressive; fast, default, slow), a "Compare with another spring" link, haptic presets (Off, Soft, Crisp, Firm), a live position curve with settle time and overshoot readout, and an Export section.
 
 Gesture types also let you restyle the moved object: shape (square, rounded, circle, pill, or a **hand-drawn custom shape**), size and fill (solid, tint, outline).
 
@@ -56,7 +57,7 @@ Everything is generated from one **platform-neutral motion spec** (JSON): trigge
 | **Share spec** | Sends the JSON to another app |
 
 - **Reduced motion:** every generated snippet has a Reduce Motion path (same stiffness, critically damped, no overshoot).
-- **Checks (motion lint):** flags sluggish settle, visible wobble, large overshoot on controls, jitter-prone stiff and under-damped springs, long stagger, missing haptics.
+- **Checks (motion lint):** flags sluggish settle, visible wobble, large overshoot on controls, jitter-prone stiff and under-damped springs, long stagger, missing haptics. Every check except long stagger has a one-tap fix (computed on tap, always within the sliders' range), with Undo for 10 seconds.
 - **Files:** experiments export and import as `.motionlab` files (versioned, defensively parsed).
 
 ---
@@ -157,9 +158,10 @@ Important rule: `INSERT OR REPLACE` is only used for brand-new rows. Updating an
 - Video matching follows one solid-coloured object; it is not general tracking.
 - Live sync is gated by a 4-digit pairing code (5 wrong tries lock it for 30 s and change the code), but traffic is plain HTTP on the local network: it stops casual snooping, not someone capturing traffic. A shared link works on the same Wi-Fi only; some guest/café networks block device-to-device traffic.
 - Gesture exports are an honest representation of the release/settle spring; wiring it to a platform's own gesture system is left to the developer.
-- Not built: a "Compare with..." row inside each editor, a .motionlab that carries screenshots or tokens.
+- Not built: a .motionlab that carries screenshots or tokens.
 - Token drift compares pasted code against its own export stamp; a formatter that rewrites lines counts as an edit, and JSON exports (Lottie, spec) can't carry a stamp.
-- Deleting an experiment and pressing Undo restores it without its screenshot.
+- The predictive back editor's commit rule (a third of the way, or a flick) stands in for the system's; on a device the OS decides when a back swipe commits, which is why commit isn't a setting.
+- Screenshot images of deleted experiments stay on disk (the row goes, the file doesn't), so Undo can bring them back; nothing cleans them up yet.
 
 ## 15. Phase 10 (schema v13)
 
@@ -176,3 +178,14 @@ Important rule: `INSERT OR REPLACE` is only used for brand-new rows. Updating an
 ## 16. Motion in the app's own UI
 
 Screens slide and fade a little when opened or left (spring-driven, a tenth of the width), Home rows ease in when added and out when deleted (the real delete runs after the exit, so Undo and the data change together), and buttons, chips and links press in a hair. Everything checks `LocalReduceMotion`, which follows the phone's "remove animations" setting and turns all of it into plain cuts. The tuning demos are exempt: moving is their job. The reduce-motion flag is read once at launch.
+
+## 17. Android-first polish (schema v14)
+
+- **Editor frame:** the stage and a one-line readout (settle time, overshoot, nearest Material 3 spring) stay pinned while the controls scroll. On screens 720dp and wider (tablets, unfolded foldables, landscape) the stage and controls sit side by side. Other screens keep a readable 680dp column, centred. Rotating or unfolding no longer resets to Home.
+- **Material 3 springs:** chips for the six spatial springs, and "M3 Standard default" / "Near M3 ..." / "Off the M3 scale" in the readout (distance on log stiffness plus damping ratio).
+- **Predictive back:** the app opts in (`enableOnBackInvokedCallback`); a held back swipe shrinks and leans the current screen, and letting go goes back or springs into place. A new Predictive back interaction tunes that motion and exports a `PredictiveBackHandler` composable (compile-checked like the other Compose exports). v14 adds two nullable columns, `backShrinkT` and `backShiftT`.
+- **Compare from any editor:** opens Race with this spring in lane A and the nearest Material spring in lane B; Back returns to the editor.
+- **Haptics support note:** each haptic preset says whether this phone plays it as designed, as a plainer buzz, can't tell (before Android 11), or has no motor.
+- **Undo on delete** restores the experiment's screenshot too.
+- Tests: 273 unit, 65 on-device (API 34 emulator). The on-device suite doesn't run on the Android 16 image with the current test libraries (`InputManager.getInstance` was removed); that's the test tooling, not the app.
+

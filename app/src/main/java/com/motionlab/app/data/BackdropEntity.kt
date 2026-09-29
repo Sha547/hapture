@@ -63,7 +63,18 @@ class BackdropRepository(private val context: Context, private val dao: Backdrop
         return true
     }
 
-    suspend fun setFocus(experimentId: Long, focusY: Float) = dao.setFocus(experimentId, focusY.coerceIn(0f, 1f))
+    /** The backdrop row as it is now, taken just before its experiment is deleted so an Undo can put it back. */
+    suspend fun snapshot(experimentId: Long): BackdropEntity? = dao.get(experimentId)
+
+    /**
+     * Puts back a row from [snapshot] after its experiment was restored. The image file outlives the cascade
+     * (only [clear] deletes it), so this is just the row -- unless the file has gone, then there's nothing to show.
+     */
+    suspend fun restore(backdrop: BackdropEntity) {
+        if (File(backdrop.path).exists()) dao.put(backdrop)
+    }
+
+    suspend fun setFocus(experimentId: Long, focusY: Float) =dao.setFocus(experimentId, focusY.coerceIn(0f, 1f))
 
     suspend fun clear(experimentId: Long) {
         dao.get(experimentId)?.let { File(it.path).delete() }

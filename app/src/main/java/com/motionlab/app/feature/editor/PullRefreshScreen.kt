@@ -1,5 +1,6 @@
 package com.motionlab.app.feature.editor
 
+import com.motionlab.app.core.spec.SpringSpec
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
@@ -123,6 +124,20 @@ fun PullRefreshScreen(
         persist()
     }
 
+    fun applySpring(s: Float, d: Float) {
+        stiffnessT = s
+        dampingT = d
+        selectedPreset = null
+        persist()
+    }
+
+    fun applyHaptic(p: HapticPreset) {
+        hapticPreset = p
+        haptics.preset = p
+        haptics.preview(p)
+        persist()
+    }
+
     fun triggerPx() = with(density) { ParameterMapping.pullTriggerDp(triggerT).dp.toPx() }
     fun holdMs() = ParameterMapping.pullHoldMs(holdT)
 
@@ -151,10 +166,11 @@ fun PullRefreshScreen(
         "${SpringMath.settleMs(k, z)} ms  /  ${(SpringMath.overshoot(z) * 100).roundToInt()}% overshoot"
     }
 
-    AppScreen(scrollable = true) {
-        TopBar(title = "Pull to refresh", onBack = onBack)
-        Spacer(Modifier.height(8.dp))
-
+    EditorScaffold(
+        title = "Pull to refresh",
+        onBack = onBack,
+        spring = SpringSpec(ParameterMapping.stiffness(stiffnessT), ParameterMapping.dampingRatio(dampingT)),
+        stage = {
         Column(Modifier.reveal(0)) {
             Stage {
                 Canvas(Modifier.matchParentSize()) {
@@ -225,12 +241,18 @@ fun PullRefreshScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = tokens.inkSoft,
             )
-            Spacer(Modifier.height(40.dp))
         }
-
+        },
+        controls = {
         EditorSection("Presets", 1) {
-            PresetRow(selected = selectedPreset, onSelect = ::applyPreset)
-            TokenRow { s, d -> stiffnessT = s; dampingT = d; selectedPreset = null; persist() }
+            SpringPresets(
+                name = loaded?.name ?: "",
+                stiffnessT = stiffnessT,
+                dampingT = dampingT,
+                selected = selectedPreset,
+                onPreset = ::applyPreset,
+                onSpring = ::applySpring,
+            )
         }
 
         EditorSection("Motion", 2) {
@@ -254,12 +276,7 @@ fun PullRefreshScreen(
         }
 
         EditorSection("Haptics", 4) {
-            HapticControls(preset = hapticPreset, onSelect = {
-                hapticPreset = it
-                haptics.preset = it
-                haptics.preview(it)
-                persist()
-            })
+            HapticControls(preset = hapticPreset, onSelect = ::applyHaptic)
         }
 
         EditorSection("Curve", 5, trailing = readout) {
@@ -267,8 +284,10 @@ fun PullRefreshScreen(
         }
 
         val name = loaded?.name ?: "Pull to Refresh"
-        EditorSection("Export", 6, gap = 0.dp) {
+        Column(Modifier.reveal(6)) {
             ExportPanel(
+                onApplySpring = ::applySpring,
+                onApplyHaptic = ::applyHaptic,
                 compose = {
                     PullRefreshCodeGenerator.generate(
                         stiffness = ParameterMapping.stiffness(stiffnessT),
@@ -300,5 +319,6 @@ fun PullRefreshScreen(
             )
         }
         Spacer(Modifier.height(24.dp))
-    }
+        },
+    )
 }

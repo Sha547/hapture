@@ -2,7 +2,6 @@ package com.motionlab.app
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.SystemBarStyle
 import androidx.activity.enableEdgeToEdge
@@ -50,6 +49,19 @@ import com.motionlab.app.data.MIGRATION_9_10
 import com.motionlab.app.data.MIGRATION_10_11
 import com.motionlab.app.data.MIGRATION_11_12
 import com.motionlab.app.data.MIGRATION_12_13
+import com.motionlab.app.data.MIGRATION_13_14
+import com.motionlab.app.data.BackdropEntity
+import com.motionlab.app.core.spec.SpringSpec
+import com.motionlab.app.feature.common.LocalOpenCompare
+import com.motionlab.app.feature.editor.PredictiveBackScreen
+import androidx.activity.BackEventCompat
+import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.unit.dp
+import kotlin.coroutines.cancellation.CancellationException
 import com.motionlab.app.data.MotionTokenRepository
 import com.motionlab.app.data.BackdropRepository
 import com.motionlab.app.data.TokenSetRepository
@@ -106,9 +118,9 @@ import kotlinx.coroutines.launch
  * Opening a screen slides it in a little from the right while it fades in, and going back reverses that.
  * Small on purpose (a tenth of the width) and driven by a spring; with Reduce Motion it is a plain cut.
  */
-private fun screenTransition(toHome: Boolean, reduce: Boolean): ContentTransform {
+private fun screenTransition(backward: Boolean, reduce: Boolean): ContentTransform {
     if (reduce) return EnterTransition.None togetherWith ExitTransition.None
-    val dir = if (toHome) -1 else 1
+    val dir = if (backward) -1 else 1
     val slide = spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = IntOffset.VisibilityThreshold)
     return (fadeIn(tween(200)) + slideInHorizontally(slide) { dir * it / 10 }) togetherWith
         (fadeOut(tween(120)) + slideOutHorizontally(slide) { -dir * it / 10 })
@@ -121,8 +133,12 @@ private sealed interface Route {
     data class Timeline(val id: Long) : Route
     data class Doodle(val id: Long) : Route
     data object Capture : Route
-    data object Compare : Route
+    /** [seed] fills lane A (from an editor's "Compare with"); Back returns to [back]. */
+    data class Compare(val seedName: String? = null, val seed: SpringSpec? = null, val back: Route = Home) : Route
 }
+
+/** Where Back goes from [route]: Compare returns to whoever opened it, everything else to Home. */
+private fun parentOf(route: Route): Route = if (route is Route.Compare) route.back else Route.Home
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -134,7 +150,7 @@ class MainActivity : ComponentActivity() {
             MotionLabDatabase::class.java,
             "motion-lab.db",
         ).addMigrations(
-            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13,
+            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14,
         ).build()
         val repository = ExperimentRepository(database.experimentDao())
         val timelineRepository = TimelineRepository(database.timelineDao())
@@ -168,22 +184,69 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
                 val tokens by tokenRepository.observeAll().collectAsState(initial = emptyList<MotionTokenEntity>())
 
+                // Screenshot rows of experiments deleted this session, so Undo can put them back too (the row
+                // cascades away with the experiment; the image file stays on disk until the next delete of that id).
+                val deletedBackdrops = remember { mutableMapOf<Long, BackdropEntity>() }
+
+                // In-app predictive back: while the system back gesture is held, the screen shrinks and leans toward
+                // the finger, the same shape as the system's own; letting go either goes back or springs into place.
+                val backProgress = remember { Animatable(0f) }
+                var backFromLeft by remember { mutableStateOf(true) }
+                var swiped by remember { mutableStateOf<Route?>(null) }
+
                 CompositionLocalProvider(
                     LocalReduceMotion provides reduceMotion,
                     LocalMotionTokens provides tokens,
                     LocalSaveMotionToken provides { n, k, z -> scope.launch { tokenRepository.save(n, k, z) } },
+                    LocalOpenCompare provides { n, spring -> route = Route.Compare(n, spring, back = route) },
                 ) {
-                BackHandler(enabled = route !is Route.Home) {
-                    route = Route.Home
+                PredictiveBackHandler(enabled = route !is Route.Home) { events ->
+                    val from = route
+                    swiped = from
+                    try {
+                        events.collect { e ->
+                            backFromLeft = e.swipeEdge == BackEventCompat.EDGE_LEFT
+                            if (!reduceMotion) backProgress.snapTo(e.progress)
+                        }
+                        route = parentOf(from)
+                        // Keep the outgoing screen as it was let go while it fades, then reset for the next swipe.
+                        scope.launch {
+                            kotlinx.coroutines.delay(320)
+                            backProgress.snapTo(0f)
+                            swiped = null
+                        }
+                    } catch (e: CancellationException) {
+                        scope.launch {
+                            backProgress.animateTo(0f, spring(stiffness = Spring.StiffnessMedium))
+                            swiped = null
+                        }
+                        throw e
+                    }
                 }
 
+                val canvas = com.motionlab.app.ui.design.LocalTokens.current.canvas
+                val line = com.motionlab.app.ui.design.LocalTokens.current.line
                 // The canvas colour sits behind the transition, or the fade and slide would show the black window underneath.
+                // It darkens a touch under a back swipe, so the shrinking screen has an edge to read against.
                 AnimatedContent(
-                    modifier = Modifier.fillMaxSize().background(com.motionlab.app.ui.design.LocalTokens.current.canvas),
+                    modifier = Modifier.fillMaxSize().background(lerp(canvas, line, backProgress.value)),
                     targetState = route,
-                    transitionSpec = { screenTransition(toHome = targetState is Route.Home, reduce = reduceMotion) },
+                    transitionSpec = { screenTransition(backward = targetState == parentOf(initialState), reduce = reduceMotion) },
                     label = "screen",
                 ) { current ->
+                androidx.compose.foundation.layout.Box(
+                    Modifier.fillMaxSize().then(
+                        if (current == swiped) Modifier.graphicsLayer {
+                            val p = backProgress.value
+                            val s = 1f - 0.1f * p
+                            scaleX = s
+                            scaleY = s
+                            translationX = (if (backFromLeft) 1f else -1f) * size.width * 0.04f * p
+                            shape = RoundedCornerShape(28.dp.toPx() * (p * 5f).coerceAtMost(1f))
+                            clip = true
+                        } else Modifier
+                    ),
+                ) {
                 when (current) {
                     is Route.Home -> {
                         val experiments by repository.observeAll()
@@ -212,8 +275,18 @@ class MainActivity : ComponentActivity() {
                             onNewExperiment = { route = Route.NewExperiment },
                             onOpen = { route = Route.Experiment(it.id, it.type) },
                             onRename = { entity, newName -> scope.launch { repository.rename(entity, newName) } },
-                            onDelete = { entity -> scope.launch { repository.delete(entity) } },
-                            onUndoDelete = { entity -> scope.launch { repository.restore(entity) } },
+                            onDelete = { entity ->
+                                scope.launch {
+                                    backdropRepository.snapshot(entity.id)?.let { deletedBackdrops[entity.id] = it }
+                                    repository.delete(entity)
+                                }
+                            },
+                            onUndoDelete = { entity ->
+                                scope.launch {
+                                    repository.restore(entity)
+                                    deletedBackdrops.remove(entity.id)?.let { backdropRepository.restore(it) }
+                                }
+                            },
                             onPin = { entity, pinned -> scope.launch { repository.setPinned(entity, pinned) } },
                             onImport = { text ->
                                 when (val result = ProjectFile.decode(text)) {
@@ -246,7 +319,7 @@ class MainActivity : ComponentActivity() {
                             onUndoDeleteDoodle = { entity -> scope.launch { doodleRepository.restore(entity) } },
                             tokens = tokens,
                             onCapture = { route = Route.Capture },
-                            onCompare = { route = Route.Compare },
+                            onCompare = { route = Route.Compare() },
                             onDeleteToken = { token -> scope.launch { tokenRepository.delete(token) } },
                         )
                     }
@@ -298,6 +371,12 @@ class MainActivity : ComponentActivity() {
                             onBack = { route = Route.Home },
                         )
 
+                        ExperimentType.PREDICTIVE_BACK -> PredictiveBackScreen(
+                            experimentId = current.id,
+                            repository = repository,
+                            onBack = { route = Route.Home },
+                        )
+
                         ExperimentType.DRAG_REORDER -> DragReorderScreen(
                             experimentId = current.id,
                             repository = repository,
@@ -320,7 +399,12 @@ class MainActivity : ComponentActivity() {
                     }
                     }
 
-                    is Route.Compare -> CompareScreen(store = compareStore, onBack = { route = Route.Home })
+                    is Route.Compare -> CompareScreen(
+                        store = compareStore,
+                        seedName = current.seedName,
+                        seed = current.seed,
+                        onBack = { route = current.back },
+                    )
 
                     is Route.Capture -> CaptureScreen(
                         onBack = { route = Route.Home },
@@ -363,6 +447,7 @@ class MainActivity : ComponentActivity() {
                         experimentRepository = repository,
                         onBack = { route = Route.Home },
                     )
+                }
                 }
                 }
                 }

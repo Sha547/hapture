@@ -59,6 +59,8 @@ object ProjectFile {
         e.reorderThresholdT?.let { params.put("reorderThresholdT", r(it)) }
         e.triggerAmountT?.let { params.put("triggerAmountT", r(it)) }
         e.triggerStaggerT?.let { params.put("triggerStaggerT", r(it)) }
+        e.backShrinkT?.let { params.put("backShrinkT", r(it)) }
+        e.backShiftT?.let { params.put("backShiftT", r(it)) }
         e.chainProperty?.let {
             params.put("chainProperty", it)
             e.chainAtT?.let { v -> params.put("chainAtT", r(v)) }
@@ -146,6 +148,10 @@ object ProjectFile {
                 resistanceT = req("resistanceT") ?: return Result.Error("Missing resistance."),
                 zoomMinT = req("zoomMinT") ?: return Result.Error("Missing minimum zoom."),
                 zoomMaxT = req("zoomMaxT") ?: return Result.Error("Missing maximum zoom."),
+            )
+            ExperimentType.PREDICTIVE_BACK -> base.copy(
+                backShrinkT = req("backShrinkT") ?: return Result.Error("Missing shrink."),
+                backShiftT = req("backShiftT") ?: return Result.Error("Missing edge shift."),
             )
             ExperimentType.DRAG_REORDER -> base.copy(
                 reorderThresholdT = req("reorderThresholdT") ?: return Result.Error("Missing swap threshold."),

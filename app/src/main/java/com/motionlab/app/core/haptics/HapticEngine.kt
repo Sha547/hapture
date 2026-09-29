@@ -31,6 +31,38 @@ class HapticEngine(context: Context) {
     private val supportsAmplitudeControl: Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && vibrator?.hasAmplitudeControl() == true
 
+    /**
+     * How faithfully this phone plays [effect]. Predefined effects are asked about directly on
+     * Android 11+ (`areEffectsSupported`); before that the answer isn't knowable. The two custom
+     * one-shots (soft, heavy) only feel different from a plain buzz with amplitude control.
+     */
+    fun support(effect: HapticEffect): HapticSupport {
+        val v = vibrator
+        if (!hasHardware || v == null) return HapticSupport.NONE
+        val predefined = when (effect) {
+            HapticEffect.SOFT -> if (supportsAmplitudeControl) return HapticSupport.EXACT else VibrationEffect.EFFECT_TICK
+            HapticEffect.HEAVY -> if (supportsAmplitudeControl) return HapticSupport.EXACT else VibrationEffect.EFFECT_HEAVY_CLICK
+            HapticEffect.TICK -> VibrationEffect.EFFECT_TICK
+            HapticEffect.CLICK -> VibrationEffect.EFFECT_CLICK
+            HapticEffect.IMPACT -> VibrationEffect.EFFECT_HEAVY_CLICK
+            HapticEffect.SUCCESS -> VibrationEffect.EFFECT_DOUBLE_CLICK
+        }
+        if (!supportsPredefinedEffects) return HapticSupport.APPROXIMATE
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return HapticSupport.UNKNOWN
+        return when (v.areEffectsSupported(predefined).first()) {
+            Vibrator.VIBRATION_EFFECT_SUPPORT_YES -> HapticSupport.EXACT
+            Vibrator.VIBRATION_EFFECT_SUPPORT_NO -> HapticSupport.APPROXIMATE
+            else -> HapticSupport.UNKNOWN
+        }
+    }
+
+    /** The weakest support across every effect [preset] uses; null for Off, which plays nothing. */
+    fun support(preset: HapticPreset): HapticSupport? {
+        val effects = HapticEvent.all.mapNotNull { (_, e) -> preset.effectFor(e) }.distinct()
+        if (effects.isEmpty()) return null
+        return effects.map { support(it) }.minBy { it.ordinal }
+    }
+
     /** Which feel [play] uses. Screens set this from the experiment's saved preset. */
     var preset: HapticPreset = HapticPreset.CRISP
 

@@ -10,7 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     entities = [ExperimentEntity::class, TimelineEntity::class, TimelineStepEntity::class, TimelineHapticEntity::class, DoodleEntity::class, MotionTokenEntity::class,
         TokenSetEntity::class, TokenSetItemEntity::class, BackdropEntity::class,
     ],
-    version = 13,
+    version = 14,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -179,5 +179,13 @@ val MIGRATION_12_13 = object : Migration(12, 13) {
         db.execSQL("ALTER TABLE experiments ADD COLUMN chainLagT REAL")
         db.execSQL("ALTER TABLE experiments ADD COLUMN chainStiffnessT REAL")
         db.execSQL("ALTER TABLE experiments ADD COLUMN chainDampingT REAL")
+    }
+}
+
+/** v14: predictive back's two settings (nullable columns, so every existing row is unchanged). */
+val MIGRATION_13_14 = object : Migration(13, 14) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE experiments ADD COLUMN backShrinkT REAL")
+        db.execSQL("ALTER TABLE experiments ADD COLUMN backShiftT REAL")
     }
 }

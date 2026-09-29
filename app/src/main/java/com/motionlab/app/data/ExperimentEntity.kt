@@ -71,6 +71,11 @@ data class ExperimentEntity(
     val chainStiffnessT: Float? = null,
     val chainDampingT: Float? = null,
 
+    // Predictive back only (added in schema v14): how far the page shrinks under the finger, and how far
+    // it leans toward the swiping edge. When a swipe commits is the system's call, so it isn't a setting.
+    val backShrinkT: Float? = null,
+    val backShiftT: Float? = null,
+
     // How the interaction feels in the hand (added in schema v3).
     @ColumnInfo(defaultValue = "'CRISP'") val hapticPreset: HapticPreset = HapticPreset.CRISP,
 
@@ -112,4 +117,5 @@ enum class ExperimentType {
     TAB_INDICATOR,
     STAGGER_LIST,
     LIKE_BURST,
+    PREDICTIVE_BACK,
 }

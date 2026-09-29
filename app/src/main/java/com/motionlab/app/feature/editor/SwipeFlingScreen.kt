@@ -1,5 +1,6 @@
 package com.motionlab.app.feature.editor
 
+import com.motionlab.app.core.spec.SpringSpec
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDecay
 import androidx.compose.animation.core.exponentialDecay
@@ -131,6 +132,20 @@ fun SwipeFlingScreen(
         persist()
     }
 
+    fun applySpring(s: Float, d: Float) {
+        stiffnessT = s
+        dampingT = d
+        selectedPreset = null
+        persist()
+    }
+
+    fun applyHaptic(p: HapticPreset) {
+        hapticPreset = p
+        haptics.preset = p
+        haptics.preview(p)
+        persist()
+    }
+
     // Read at gesture time, not captured: the sliders can change between drags.
     fun distancePx() = with(density) { ParameterMapping.flingDistanceDp(distanceT).dp.toPx() }
     fun velocityThresholdPx() = with(density) { ParameterMapping.flingVelocityDpPerSec(sensitivityT).dp.toPx() }
@@ -173,10 +188,11 @@ fun SwipeFlingScreen(
         "${SpringMath.settleMs(k, z)} ms  /  ${(SpringMath.overshoot(z) * 100).roundToInt()}% return overshoot"
     }
 
-    AppScreen(scrollable = true) {
-        TopBar(title = "Swipe and fling", onBack = onBack)
-        Spacer(Modifier.height(8.dp))
-
+    EditorScaffold(
+        title = "Swipe and fling",
+        onBack = onBack,
+        spring = SpringSpec(ParameterMapping.stiffness(stiffnessT), ParameterMapping.dampingRatio(dampingT)),
+        stage = {
         Column(Modifier.reveal(0)) {
             Stage(Modifier.onSizeChanged { stageWidthPx = it.width.toFloat() }) {
                 // Dismiss lines: they darken once you're past them.
@@ -275,9 +291,9 @@ fun SwipeFlingScreen(
                 style = MaterialTheme.typography.bodySmall,
                 color = tokens.inkSoft,
             )
-            Spacer(Modifier.height(40.dp))
         }
-
+        },
+        controls = {
         EditorSection("Fling", 1) {
             LabeledSlider("Dismiss distance", distanceT, onValueChange = { distanceT = it }, onValueChangeFinished = ::persist)
             LabeledSlider("Fling sensitivity", sensitivityT, onValueChange = { sensitivityT = it }, onValueChangeFinished = ::persist)
@@ -286,8 +302,14 @@ fun SwipeFlingScreen(
         }
 
         EditorSection("Return spring", 2) {
-            PresetRow(selected = selectedPreset, onSelect = ::applyPreset)
-            TokenRow { s, d -> stiffnessT = s; dampingT = d; selectedPreset = null; persist() }
+            SpringPresets(
+                name = loaded?.name ?: "",
+                stiffnessT = stiffnessT,
+                dampingT = dampingT,
+                selected = selectedPreset,
+                onPreset = ::applyPreset,
+                onSpring = ::applySpring,
+            )
             Spacer(Modifier.height(16.dp))
             LabeledSlider(
                 "Stiffness", stiffnessT,
@@ -306,12 +328,7 @@ fun SwipeFlingScreen(
         }
 
         EditorSection("Haptics", 4) {
-            HapticControls(preset = hapticPreset, onSelect = {
-                hapticPreset = it
-                haptics.preset = it
-                haptics.preview(it)
-                persist()
-            })
+            HapticControls(preset = hapticPreset, onSelect = ::applyHaptic)
         }
 
         EditorSection("Curve", 5, trailing = readout) {
@@ -319,8 +336,10 @@ fun SwipeFlingScreen(
         }
 
         val name = loaded?.name ?: "Swipe and Fling"
-        EditorSection("Export", 6, gap = 0.dp) {
+        Column(Modifier.reveal(6)) {
             ExportPanel(
+                onApplySpring = ::applySpring,
+                onApplyHaptic = ::applyHaptic,
                 compose = {
                     SwipeCodeGenerator.generate(
                         stiffness = ParameterMapping.stiffness(stiffnessT),
@@ -354,5 +373,6 @@ fun SwipeFlingScreen(
             )
         }
         Spacer(Modifier.height(24.dp))
-    }
+        },
+    )
 }

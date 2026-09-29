@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
@@ -47,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import com.motionlab.app.core.compare.SpringCompare
 import com.motionlab.app.core.haptics.HapticEffect
 import com.motionlab.app.core.haptics.HapticEngine
+import com.motionlab.app.core.model.MaterialMotion
+import com.motionlab.app.core.model.MaterialSpring
 import com.motionlab.app.core.model.MotionPreset
 import com.motionlab.app.core.spec.SpringSpec
 import com.motionlab.app.data.CompareStore
@@ -72,7 +75,7 @@ private data class Named(val label: String, val spring: SpringSpec)
  * which preset is which so you learn to tell them by feel alone.
  */
 @Composable
-fun CompareScreen(store: CompareStore, onBack: () -> Unit) {
+fun CompareScreen(store: CompareStore, onBack: () -> Unit, seedName: String? = null, seed: SpringSpec? = null) {
     val t = LocalTokens.current
     var blind by remember { mutableStateOf(false) }
 
@@ -83,38 +86,48 @@ fun CompareScreen(store: CompareStore, onBack: () -> Unit) {
             Chip("Blind", selected = blind, onClick = { blind = true }, modifier = Modifier.testTag("modeBlind"))
         }
         Spacer(Modifier.height(20.dp))
-        if (blind) BlindMode(store) else RaceMode()
+        if (blind) BlindMode(store) else RaceMode(seed?.let { Named(seedName?.ifBlank { null } ?: "This spring", it) })
         Spacer(Modifier.height(48.dp))
     }
 }
 
 @Composable
-private fun options(): List<Named> {
+private fun options(seed: Named?): List<Named> {
     val tokens = LocalMotionTokens.current
-    return MotionPreset.entries.map { Named(it.displayName, SpringCompare.fromPreset(it)) } +
+    return listOfNotNull(seed) +
+        MotionPreset.entries.map { Named(it.displayName, SpringCompare.fromPreset(it)) } +
+        MaterialSpring.entries.map { Named("M3 ${it.label}", it.spring) } +
         tokens.map { Named(it.name, SpringSpec(it.stiffness, it.dampingRatio)) }
 }
 
 @Composable
 private fun Picker(title: String, selected: Named, all: List<Named>, onPick: (Named) -> Unit) {
-    SectionLabel(title, trailing = "${selected.label}  k${selected.spring.stiffness.toInt()}  z${"%.2f".format(selected.spring.dampingRatio)}")
+    SectionLabel(title, trailing = "${selected.label}  k ${selected.spring.stiffness.toInt()}  \u03b6 ${"%.2f".format(selected.spring.dampingRatio)}")
     Spacer(Modifier.height(10.dp))
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    // Opens scrolled to the chosen one, so a pick further along the row (a Material spring, a token) is in view.
+    val state = rememberLazyListState(initialFirstVisibleItemIndex = all.indexOfFirst { it.label == selected.label }.coerceAtLeast(0))
+    LazyRow(state = state, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(all.size) { i -> Chip(all[i].label, selected = all[i].label == selected.label, onClick = { onPick(all[i]) }) }
     }
     Spacer(Modifier.height(18.dp))
 }
 
 @Composable
-private fun RaceMode() {
+private fun RaceMode(seed: Named?) {
     val t = LocalTokens.current
     val context = LocalContext.current
     val haptics = remember { HapticEngine(context) }
     val saveToken = LocalSaveMotionToken.current
-    val all = options()
+    val all = options(seed)
 
-    var a by remember { mutableStateOf(all.first { it.label == "Snappy" }) }
-    var b by remember { mutableStateOf(all.first { it.label == "Bouncy" }) }
+    // From an editor: its spring against the nearest Material 3 one, the comparison an Android developer wants first.
+    var a by remember { mutableStateOf(seed ?: all.first { it.label == "Snappy" }) }
+    var b by remember {
+        mutableStateOf(
+            seed?.let { s -> all.first { it.label == "M3 ${MaterialMotion.nearest(s.spring).nearest.label}" } }
+                ?: all.first { it.label == "Bouncy" }
+        )
+    }
     var mixT by remember { mutableFloatStateOf(0.5f) }
     val mix = SpringCompare.blend(a.spring, b.spring, mixT)
     val springs = listOf(a.spring, b.spring, mix)

@@ -1,5 +1,6 @@
 package com.motionlab.app.feature.editor
 
+import com.motionlab.app.core.spec.SpringSpec
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.detectDragGestures
@@ -124,6 +125,20 @@ fun SpringDragScreen(
         persist()
     }
 
+    fun applySpring(s: Float, d: Float) {
+        stiffnessT = s
+        dampingT = d
+        selectedPreset = null
+        persist()
+    }
+
+    fun applyHaptic(p: HapticPreset) {
+        hapticPreset = p
+        haptics.preset = p
+        haptics.preview(p)
+        persist()
+    }
+
     val offsetX = remember { Animatable(0f) }
     val boundPx = remember(density) { with(density) { 56.dp.toPx() } }
     val curveRangePx = remember(density) { with(density) { 160.dp.toPx() } }
@@ -158,10 +173,11 @@ fun SpringDragScreen(
         "${SpringMath.settleMs(k, z)} ms  /  ${(SpringMath.overshoot(z) * 100).roundToInt()}% overshoot"
     }
 
-    AppScreen(scrollable = true) {
-        TopBar(title = "Spring drag", onBack = onBack)
-        Spacer(Modifier.height(8.dp))
-
+    EditorScaffold(
+        title = "Spring drag",
+        onBack = onBack,
+        spring = SpringSpec(ParameterMapping.stiffness(stiffnessT), ParameterMapping.dampingRatio(dampingT)),
+        stage = {
         Column(Modifier.reveal(0)) {
             // --- Interactive object: the visual hero (spec §20) ---
             Stage {
@@ -217,12 +233,18 @@ fun SpringDragScreen(
             }
             Spacer(Modifier.height(12.dp))
             Text("Drag the shape sideways and let go.", style = MaterialTheme.typography.bodySmall, color = t.inkSoft)
-            Spacer(Modifier.height(40.dp))
         }
-
+        },
+        controls = {
         EditorSection("Presets", 1) {
-            PresetRow(selected = selectedPreset, onSelect = ::applyPreset)
-            TokenRow { s, d -> stiffnessT = s; dampingT = d; selectedPreset = null; persist() }
+            SpringPresets(
+                name = loaded?.name ?: "",
+                stiffnessT = stiffnessT,
+                dampingT = dampingT,
+                selected = selectedPreset,
+                onPreset = ::applyPreset,
+                onSpring = ::applySpring,
+            )
         }
 
         EditorSection("Motion", 2) {
@@ -244,12 +266,7 @@ fun SpringDragScreen(
         }
 
         EditorSection("Haptics", 4) {
-            HapticControls(preset = hapticPreset, onSelect = {
-                hapticPreset = it
-                haptics.preset = it
-                haptics.preview(it)
-                persist()
-            })
+            HapticControls(preset = hapticPreset, onSelect = ::applyHaptic)
         }
 
         EditorSection("Curve", 5, trailing = readout) {
@@ -257,8 +274,10 @@ fun SpringDragScreen(
         }
 
         val name = loaded?.name ?: "Spring Drag"
-        EditorSection("Export", 6, gap = 0.dp) {
+        Column(Modifier.reveal(6)) {
             ExportPanel(
+                onApplySpring = ::applySpring,
+                onApplyHaptic = ::applyHaptic,
                 compose = {
                     SpringCodeGenerator.generate(
                         stiffness = ParameterMapping.stiffness(stiffnessT),
@@ -288,5 +307,6 @@ fun SpringDragScreen(
             )
         }
         Spacer(Modifier.height(24.dp))
-    }
+        },
+    )
 }

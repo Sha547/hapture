@@ -41,7 +41,7 @@ class MigrationInstrumentedTest {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         return Room.databaseBuilder(context, MotionLabDatabase::class.java, dbName)
             .addMigrations(
-                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13,
+                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14,
             )
             .build()
             .also { db = it }
@@ -314,7 +314,7 @@ class MigrationInstrumentedTest {
                     val name = c.getString(0)
                     if (name in listOf("token_sets", "token_set_items", "experiment_backdrops", "index_token_set_items_setId")) continue
                     var sql = c.getString(1)
-                    if (name == "experiments") sql = sql.replace(Regex(",\\s*`chain\\w+` (TEXT|REAL)"), "")
+                    if (name == "experiments") sql = sql.replace(Regex(",\\s*`(chain|back)\\w+` (TEXT|REAL)"), "")
                     ddl += sql
                 }
             }
@@ -353,6 +353,49 @@ class MigrationInstrumentedTest {
             assertEquals(0.3f, database.backdropDao().get(old.id)!!.focusY, 1e-4f)
             database.experimentDao().delete(old)
             assertNull(database.backdropDao().get(old.id))
+        }
+    }
+
+    @Test
+    fun v13DatabaseGainsPredictiveBackColumnsAndKeepsItsExperiments() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        // The v13 shape: what Room builds now, minus the two columns v14 added.
+        val fresh = "migration-fresh13.db"
+        context.deleteDatabase(fresh)
+        Room.databaseBuilder(context, MotionLabDatabase::class.java, fresh).build().apply { openHelper.writableDatabase; close() }
+        val ddl = ArrayList<String>()
+        SQLiteDatabase.openDatabase(context.getDatabasePath(fresh).path, null, SQLiteDatabase.OPEN_READONLY).use { f ->
+            f.rawQuery("SELECT name, sql FROM sqlite_master WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'android_%' AND name != 'room_master_table'", null).use { c ->
+                while (c.moveToNext()) {
+                    var sql = c.getString(1)
+                    if (c.getString(0) == "experiments") sql = sql.replace(Regex(",\\s*`back\\w+` REAL"), "")
+                    ddl += sql
+                }
+            }
+        }
+        context.deleteDatabase(fresh)
+
+        SQLiteDatabase.openOrCreateDatabase(rawDbFile(), null).use { raw ->
+            ddl.forEach { raw.execSQL(it) }
+            raw.execSQL("INSERT INTO experiments (type,name,createdAt,updatedAt,stiffnessT,dampingT,chainProperty) VALUES ('TOGGLE','Old Toggle',1,2,0.5,0.5,'opacity')")
+            raw.version = 13
+        }
+
+        runBlocking {
+            val database = openMigrated()
+            val old = database.experimentDao().observeAll().first().single()
+            assertEquals("Old Toggle", old.name)
+            assertEquals("opacity", old.chainProperty)
+            assertNull(old.backShrinkT)
+            assertNull(old.backShiftT)
+
+            // A predictive back experiment saves and reads its two settings.
+            val repo = ExperimentRepository(database.experimentDao())
+            val back = repo.createDefault(ExperimentType.PREDICTIVE_BACK)
+            repo.save(back.copy(backShrinkT = 0.8f, backShiftT = 0.1f))
+            val read = repo.get(back.id)!!
+            assertEquals(0.8f, read.backShrinkT!!, 1e-4f)
+            assertEquals(0.1f, read.backShiftT!!, 1e-4f)
         }
     }
 }
