@@ -158,7 +158,9 @@ private fun RaceMode(seed: Named?) {
     Stage(height = 168.dp) {
         Canvas(Modifier.fillMaxWidth().height(168.dp)) {
             val left = size.width * 0.1f
-            val travel = size.width * 0.8f
+            // The finish line sits far enough in that the springiest dot's overshoot still lands inside the stage.
+            val peak = springs.maxOf { 1f + it.overshootPercent / 100f }
+            val travel = (size.width - left - 16.dp.toPx()) / peak
             val lanes = listOf(0.2f, 0.5f, 0.8f)
             val colors = listOf(t.ink, t.inkSoft, t.inkFaint)
             drawLine(t.line, Offset(left + travel, 12.dp.toPx()), Offset(left + travel, size.height - 12.dp.toPx()), 1.5f)

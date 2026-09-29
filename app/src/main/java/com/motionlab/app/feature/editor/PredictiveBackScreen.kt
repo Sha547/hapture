@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import com.motionlab.app.core.haptics.HapticEngine
 import com.motionlab.app.core.haptics.HapticEvent
 import com.motionlab.app.core.haptics.HapticPreset
+import com.motionlab.app.core.model.MaterialSpring
 import com.motionlab.app.core.model.MotionPreset
 import com.motionlab.app.core.physics.ParameterMapping
 import com.motionlab.app.core.physics.PredictiveBackSolver
@@ -88,8 +89,8 @@ fun PredictiveBackScreen(
     val scope = rememberCoroutineScope()
     val haptics = remember { HapticEngine(context) }
 
-    var stiffnessT by remember { mutableFloatStateOf(0.22f) }
-    var dampingT by remember { mutableFloatStateOf(0.556f) }
+    var stiffnessT by remember { mutableFloatStateOf(ParameterMapping.stiffnessT(MaterialSpring.STANDARD_DEFAULT.stiffness)) }
+    var dampingT by remember { mutableFloatStateOf(ParameterMapping.dampingT(MaterialSpring.STANDARD_DEFAULT.dampingRatio)) }
     var shrinkT by remember { mutableFloatStateOf(0.5f) }
     var shiftT by remember { mutableFloatStateOf(0.5f) }
     var selectedPreset by remember { mutableStateOf<MotionPreset?>(null) }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -48,6 +49,9 @@ import kotlin.math.roundToInt
 /** Wide enough for the stage and the controls to sit side by side: tablets, unfolded foldables, landscape. */
 private val TWO_PANE_MIN_WIDTH = 720.dp
 
+/** The shared TopBar's height, so the wide layout can centre what's under it. */
+private val TOP_BAR_HEIGHT = 60.dp
+
 /** Tall enough to keep the stage on screen while the controls scroll underneath it. */
 private val PINNED_STAGE_MIN_HEIGHT = 620.dp
 
@@ -75,6 +79,7 @@ internal fun EditorScaffold(
     val t = LocalTokens.current
     CompositionLocalProvider(LocalContentColor provides t.ink) {
         BoxWithConstraints(Modifier.fillMaxSize().canvasBackground(t).systemBarsPadding()) {
+            val paneHeight = maxHeight
             val wide = maxWidth >= TWO_PANE_MIN_WIDTH
             val pinned = !wide && maxHeight >= PINNED_STAGE_MIN_HEIGHT
             when {
@@ -87,10 +92,16 @@ internal fun EditorScaffold(
                             .padding(start = 32.dp, end = 28.dp),
                     ) {
                         TopBar(title = title, onBack = onBack)
-                        Spacer(Modifier.height(8.dp))
-                        stage()
-                        Spacer(Modifier.height(12.dp))
-                        SpringReadout(spring)
+                        // The stage sits in the middle of its pane rather than hugging the top with a void below;
+                        // on a short screen the minimum height gives way and the pane scrolls instead.
+                        Column(
+                            Modifier.fillMaxWidth().heightIn(min = paneHeight - TOP_BAR_HEIGHT - 24.dp),
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            stage()
+                            Spacer(Modifier.height(12.dp))
+                            SpringReadout(spring)
+                        }
                         Spacer(Modifier.height(24.dp))
                     }
                     Box(Modifier.fillMaxHeight().width(t.hairline).background(t.line))

@@ -49,6 +49,13 @@ interface TimelineDao {
     @Update
     suspend fun updateStep(step: TimelineStepEntity)
 
+    /**
+     * Adds [deltaMs] to a step's gap in one statement, clamped to 0..[maxMs]. Relative on purpose: two quick
+     * taps each add their share, where two "set to what I saw + 100" writes would both land on the same value.
+     */
+    @Query("UPDATE timeline_steps SET gapBeforeMs = MAX(0, MIN(:maxMs, gapBeforeMs + :deltaMs)) WHERE id = :stepId")
+    suspend fun nudgeGap(stepId: Long, deltaMs: Int, maxMs: Int)
+
     @Delete
     suspend fun deleteStep(step: TimelineStepEntity)
 

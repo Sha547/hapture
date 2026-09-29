@@ -99,6 +99,22 @@ class TimelineRepositoryInstrumentedTest {
     }
 
     @Test
+    fun quickGapTapsFromAStaleRowAllCount() = runBlocking {
+        val timeline = timelines.createDefault()
+        val a = experiments.createDefault(ExperimentType.SPRING_DRAG)
+        val stale = timelines.addStep(timeline.id, a.id)
+
+        // Three taps before the screen re-reads the row: each still adds its 100 ms.
+        repeat(3) { timelines.nudgeGap(stale, 100) }
+        assertEquals(300, timelines.observeSteps(timeline.id).first().single().gapBeforeMs)
+
+        timelines.nudgeGap(stale, -1_000)
+        assertEquals(0, timelines.observeSteps(timeline.id).first().single().gapBeforeMs)
+        timelines.nudgeGap(stale, 999_999)
+        assertEquals(MAX_GAP_MS, timelines.observeSteps(timeline.id).first().single().gapBeforeMs)
+    }
+
+    @Test
     fun deletingATimelineCascadesToItsSteps() = runBlocking {
         val timeline = timelines.createDefault()
         val a = experiments.createDefault(ExperimentType.SPRING_DRAG)

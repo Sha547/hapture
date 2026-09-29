@@ -1,6 +1,8 @@
 package com.motionlab.app.data
 
+import com.motionlab.app.core.model.MaterialSpring
 import com.motionlab.app.core.model.ObjectFill
+import com.motionlab.app.core.physics.ParameterMapping
 import com.motionlab.app.core.model.ObjectShape
 import kotlinx.coroutines.flow.Flow
 
@@ -141,8 +143,8 @@ class ExperimentRepository(private val dao: ExperimentDao) {
                 createdAt = now,
                 updatedAt = now,
                 // Material 3's standard default spatial spring (700, 0.9): what Android's own back uses.
-                stiffnessT = 0.22f,
-                dampingT = 0.556f,
+                stiffnessT = ParameterMapping.stiffnessT(MaterialSpring.STANDARD_DEFAULT.stiffness),
+                dampingT = ParameterMapping.dampingT(MaterialSpring.STANDARD_DEFAULT.dampingRatio),
                 backShrinkT = 0.5f,
                 backShiftT = 0.5f,
             )

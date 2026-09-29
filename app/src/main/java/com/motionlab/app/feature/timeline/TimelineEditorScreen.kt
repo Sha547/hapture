@@ -218,8 +218,8 @@ fun TimelineEditorScreen(
                     active = active?.index == i,
                     onMoveUp = { scope.launch { timelineRepository.moveStep(step, -1) } },
                     onMoveDown = { scope.launch { timelineRepository.moveStep(step, 1) } },
-                    onGapDecrease = { scope.launch { timelineRepository.setGap(step, step.gapBeforeMs - 100) } },
-                    onGapIncrease = { scope.launch { timelineRepository.setGap(step, step.gapBeforeMs + 100) } },
+                    onGapDecrease = { scope.launch { timelineRepository.nudgeGap(step, -100) } },
+                    onGapIncrease = { scope.launch { timelineRepository.nudgeGap(step, 100) } },
                     onLongClick = { removing = step },
                 )
             }

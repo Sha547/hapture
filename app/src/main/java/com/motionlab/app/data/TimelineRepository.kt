@@ -66,6 +66,12 @@ class TimelineRepository(private val dao: TimelineDao) {
         touch(step.timelineId)
     }
 
+    /** Changes [step]'s gap by [deltaMs] relative to what's stored now, so rapid taps never cancel each other out. */
+    suspend fun nudgeGap(step: TimelineStepEntity, deltaMs: Int) {
+        dao.nudgeGap(step.id, deltaMs, MAX_GAP_MS)
+        touch(step.timelineId)
+    }
+
     fun observeHaptics(timelineId: Long): Flow<List<TimelineHapticEntity>> = dao.observeHaptics(timelineId)
 
     suspend fun addHaptic(timelineId: Long, timeMs: Int, effect: HapticEffect): TimelineHapticEntity {
