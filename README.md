@@ -1,4 +1,4 @@
-# Motion Lab
+# Hapture
 
 Design how an Android interaction feels, on-device, with real touch and
 haptics — then copy working Jetpack Compose code.
@@ -122,10 +122,10 @@ impact, heavy, success); picking one plays it once. Saved per experiment and
 included in the design spec. Note: unit tests cover the tables, but the vibration
 itself can only be judged on a phone; the emulator has no real motor.
 
-**`.motionlab` files** (`data/ProjectFile.kt`) -- one experiment as versioned JSON
+**`.hapture` files** (`data/ProjectFile.kt`) -- one experiment as versioned JSON
 holding the slider positions (not derived numbers), so an import reproduces it
-exactly. Home > "Import a .motionlab file" and, from a row's long-press menu,
-"Export as .motionlab", both through the system file picker (no storage
+exactly. Home > "Import a .hapture file" and, from a row's long-press menu,
+"Export as .hapture", both through the system file picker (no storage
 permission). Imports are defensive: wrong format, newer version, unknown type,
 missing or non-numeric parameters and oversized files are refused with a reason;
 0..1 values are clamped. Verified on-device: import, refusal of a junk file, and
@@ -192,7 +192,7 @@ nothing for a sheet's straight top edge).
 Stored as a compact "x,y;x,y;..." string (`CustomShapeCodec`, schema v5,
 `MIGRATION_4_5`), decoded defensively like everything else here: malformed
 segments dropped, coordinates clamped, absurdly long input capped, never
-thrown on. Round-trips through `.motionlab` files too.
+thrown on. Round-trips through `.hapture` files too.
 
 Note: the doodle/hand-drawn *look* tried earlier in this project (wobbly
 outlines everywhere, a sketchbook theme) was rejected and stayed rejected --
@@ -219,7 +219,7 @@ Delete that line if you install a proper JDK later.
 ```bash
 ./gradlew :app:assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n com.motionlab.app/.MainActivity
+adb shell am start -n com.klynstudios.hapture/.MainActivity
 ```
 
 Or just open the project in Android Studio and hit Run.
@@ -286,7 +286,7 @@ build-reorder-trim-and-reopen flow on the real navigation and database).
 - **Pin a favorite** (v7): long-press a row, "Pin to top"; pinned rows sort first (`ORDER BY pinned DESC, updatedAt DESC`).
 - **Undo on delete**: delete is instant, with a 4 second "Deleted / Undo" notice. Restoring re-inserts the row; timeline steps that pointed at a deleted experiment were already cascade-deleted and stay gone. Also covers doodles.
 - **Haptic timeline** (v9): haptic markers at absolute times on a timeline, independent of the motion steps, each one of the six `HapticEffect`s. Ticks on the scrub bar, fired during playback via `HapticMarkers.crossed`, included in the sequence spec JSON.
-- **Doodles** (v10): a separate Home section with a freehand canvas. Brushes: pen, marker, paint, spray, eraser; 12 colours plus a hue slider; four canvas colours; undo/redo/clear; autosave. Strokes are stored canvas-relative so exports are resolution independent. Export: PNG (saved to Pictures/Motion Lab, or shared through a FileProvider) and SVG (copied). One painter (`drawDoodle`) serves the live canvas and the PNG, and `DoodleSvg` mirrors it brush for brush.
+- **Doodles** (v10): a separate Home section with a freehand canvas. Brushes: pen, marker, paint, spray, eraser; 12 colours plus a hue slider; four canvas colours; undo/redo/clear; autosave. Strokes are stored canvas-relative so exports are resolution independent. Export: PNG (saved to Pictures/Hapture, or shared through a FileProvider) and SVG (copied). One painter (`drawDoodle`) serves the live canvas and the PNG, and `DoodleSvg` mirrors it brush for brush.
 
 Tests: 36 instrumented (migrations up to v9 -> v10 chain, pin/undo flows, haptic cascade, doodle drawing flow) plus the unit suite.
 

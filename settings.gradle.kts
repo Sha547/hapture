@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Motion Lab"
+rootProject.name = "Hapture"
 include(":app")

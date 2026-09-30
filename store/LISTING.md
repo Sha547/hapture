@@ -3,13 +3,13 @@
 Limits: title 30, short description 80, full description 4000.
 
 ## Title
-Motion Lab
+Hapture: Motion & Haptics
 
 ## Short description
 Tune spring animations by feel on your phone, then export code for any platform.
 
 ## Full description
-Motion Lab is a motion design tool you use with your hands. Tune a spring on a real device, with real touch and real haptics, then take the numbers and the code with you.
+Hapture is a motion design tool you use with your hands. Tune a spring on a real device, with real touch and real haptics, then take the numbers and the code with you.
 
 FEEL IT, DON'T GUESS IT
 Thirteen interactions, each driven by a spring you can tune with two sliders: spring drag, magnetic snap, swipe and fling, bottom sheet, pull to refresh, pinch to zoom, predictive back, drag to reorder, toggle, button press, tab indicator, staggered list and like burst. The stage stays on screen while you tune, and a live readout shows settle time and overshoot the moment a slider moves. Eight presets to start from, four haptic feels, and a note on whether your phone can actually play each one.
@@ -21,7 +21,7 @@ COMPARE TWO SPRINGS
 Race two springs side by side and slide between them to feel the personality shift. Open Compare from any experiment and it starts with your spring against the nearest Material one. Or play the blind game: two springs, no names, guess which preset is which.
 
 CAPTURE A FEEL YOU CAN SHOW
-Draw a curve, sketch a motion on a mock screen with your finger, or point at a screen recording of an animation you like. Motion Lab fits a spring to it and tells you the numbers. Track two objects in one clip to get their relative timing.
+Draw a curve, sketch a motion on a mock screen with your finger, or point at a screen recording of an animation you like. Hapture fits a spring to it and tells you the numbers. Track two objects in one clip to get their relative timing.
 
 TRY IT ON YOUR OWN APP
 Import a screenshot of your real UI and the moving object plays over it, so you judge the feel in context.

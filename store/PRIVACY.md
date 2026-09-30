@@ -1,8 +1,8 @@
-# Motion Lab privacy policy
+# Hapture privacy policy
 
 Last updated: [date]
 
-Motion Lab does not collect, store on a server, share or sell any personal data.
+Hapture does not collect, store on a server, share or sell any personal data.
 
 **What stays on your device.** Your experiments, tokens, timelines, doodles, and any screenshots you choose to import are stored only on your device, in the app's private storage. There is no account and no cloud sync.
 

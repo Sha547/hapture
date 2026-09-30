@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Motion Lab bridge</title>
+<title>Hapture bridge</title>
 <style>
   :root {
     --canvas: #F7F6F3; --surface: #FFFFFF; --line: #E7E5E0;
@@ -41,12 +41,12 @@
 </head>
 <body>
 <main>
-  <h1>Motion Lab bridge</h1>
+  <h1>Hapture bridge</h1>
   <p class="lede">Tune on the phone, take the code here. Every export follows the sliders as you change them.</p>
 
   <section id="pair" class="card" hidden>
     <div class="label" style="margin-top:0">Pair</div>
-    <p style="margin:0 0 14px;color:var(--ink-soft)">Type the 4-digit code shown in Motion Lab under Export, Live sync.</p>
+    <p style="margin:0 0 14px;color:var(--ink-soft)">Type the 4-digit code shown in Hapture under Export, Live sync.</p>
     <form class="row" id="pairForm">
       <input id="code" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="0000" aria-label="Pairing code" />
       <button type="submit">Connect</button>
@@ -73,7 +73,7 @@
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
-  const KEY = "motionlab-bridge-token";
+  const KEY = "hapture-bridge-token";
   let token = null, es = null, exportsData = {}, current = null, spec = null;
 
   const store = {

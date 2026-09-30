@@ -1,5 +1,5 @@
-// Applies a Motion Lab spring to the prototype interactions of the selected layers.
-// The UI sends { type: "apply", spec } where spec is Motion Lab's neutral JSON.
+// Applies a Hapture spring to the prototype interactions of the selected layers.
+// The UI sends { type: "apply", spec } where spec is Hapture's neutral JSON.
 
 figma.showUI(__html__, { width: 340, height: 420 });
 
@@ -28,7 +28,7 @@ function withSpring(action, spring) {
 
 async function apply(spec) {
   const spring = springFrom(spec);
-  if (!spring) return figma.ui.postMessage({ type: "status", text: "That is not a Motion Lab spec." });
+  if (!spring) return figma.ui.postMessage({ type: "status", text: "That is not a Hapture spec." });
   const nodes = figma.currentPage.selection;
   if (nodes.length === 0) return figma.ui.postMessage({ type: "status", text: "Select a layer that has a prototype interaction." });
 

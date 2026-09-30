@@ -9,7 +9,7 @@
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:theme="@style/Theme.MotionLab"
+        android:theme="@style/Theme.Hapture"
         android:supportsRtl="true"
         android:enableOnBackInvokedCallback="true">
 
@@ -17,7 +17,7 @@
             android:name=".MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|density"
-            android:theme="@style/Theme.MotionLab">
+            android:theme="@style/Theme.Hapture">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

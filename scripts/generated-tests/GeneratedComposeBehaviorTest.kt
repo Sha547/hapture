@@ -1,4 +1,4 @@
-package com.motionlab.app
+package com.klynstudios.hapture
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -68,7 +68,7 @@ class GeneratedComposeBehaviorTest {
     // ---------- Spring drag ----------
 
     @Test fun springDragFollowsTheFingerThenSpringsHome() {
-        host { check.spring_mid.MotionLabRubberBandDrag(square()) }
+        host { check.spring_mid.HaptureRubberBandDrag(square()) }
         val start = red()!!
         rule.onNodeWithTag("host").performTouchInput { down(Offset(48.dp.toPx(), 48.dp.toPx())); moveBy(Offset(160.dp.toPx(), 0f)) }
         rule.waitForIdle()
@@ -83,7 +83,7 @@ class GeneratedComposeBehaviorTest {
     // ---------- Magnetic snap ----------
 
     @Test fun magneticSnapMovesAndSettlesOnATarget() {
-        host { Box(Modifier.fillMaxSize()) { check.magnetic_mid.MotionLabMagneticSnap(square()) } }
+        host { Box(Modifier.fillMaxSize()) { check.magnetic_mid.HaptureMagneticSnap(square()) } }
         val start = red()!!
         rule.onNodeWithTag("host").performTouchInput { down(Offset(48.dp.toPx(), 48.dp.toPx())); moveBy(Offset(110.dp.toPx(), 0f)) }
         rule.waitForIdle()
@@ -98,7 +98,7 @@ class GeneratedComposeBehaviorTest {
 
     private var dismissed = 0
 
-    private fun swipeHost() = host { Column { check.swipe_mid.MotionLabSwipeCard(onDismissed = { dismissed = it }, modifier = Modifier) { Box(square()) } } }
+    private fun swipeHost() = host { Column { check.swipe_mid.HaptureSwipeCard(onDismissed = { dismissed = it }, modifier = Modifier) { Box(square()) } } }
 
     @Test fun aLongSlowSwipeDismissesTheCard() {
         dismissed = 0; swipeHost()
@@ -144,7 +144,7 @@ class GeneratedComposeBehaviorTest {
 
     @Test fun pullToRefreshFiresAfterAFarPullAndReturns() {
         refreshed = 0
-        host { check.pull_mid.MotionLabPullToRefresh(onRefresh = { refreshed++ }, modifier = Modifier) { Box(square()) } }
+        host { check.pull_mid.HapturePullToRefresh(onRefresh = { refreshed++ }, modifier = Modifier) { Box(square()) } }
         val start = red()!!
         rule.onNodeWithTag("host").performTouchInput { down(Offset(48.dp.toPx(), 48.dp.toPx())); moveBy(Offset(0f, 400.dp.toPx())) }
         rule.waitForIdle()
@@ -159,7 +159,7 @@ class GeneratedComposeBehaviorTest {
     // ---------- Pinch zoom ----------
 
     @Test fun pinchZoomGrowsWhileHeldAndReturnsToOneOnRelease() {
-        host { check.zoom_mid.MotionLabPinchZoom(Modifier.size(200.dp)) { Box(Modifier.size(200.dp).background(Color.Red)) } }
+        host { check.zoom_mid.HapturePinchZoom(Modifier.size(200.dp)) { Box(Modifier.size(200.dp).background(Color.Red)) } }
         val before = red()!!.count
         rule.onNodeWithTag("host").performTouchInput {
             val c = Offset(100.dp.toPx(), 100.dp.toPx())
@@ -179,7 +179,7 @@ class GeneratedComposeBehaviorTest {
 
     @Test fun reorderReportsTheMoveWhenDraggedFarEnough() {
         moved = null
-        host { check.reorder_mid.MotionLabReorderRow(index = 1, itemCount = 3, onReorder = { f, t -> moved = f to t }, modifier = Modifier) { Box(square()) } }
+        host { check.reorder_mid.HaptureReorderRow(index = 1, itemCount = 3, onReorder = { f, t -> moved = f to t }, modifier = Modifier) { Box(square()) } }
         rule.onNodeWithTag("host").performTouchInput {
             down(Offset(48.dp.toPx(), 48.dp.toPx()))
             repeat(6) { advanceEventTime(20); moveBy(Offset(0f, 14.dp.toPx())) } // 84dp down: one slot (56dp) and past the threshold
@@ -191,7 +191,7 @@ class GeneratedComposeBehaviorTest {
 
     @Test fun reorderIgnoresASmallDrag() {
         moved = null
-        host { check.reorder_mid.MotionLabReorderRow(index = 1, itemCount = 3, onReorder = { f, t -> moved = f to t }, modifier = Modifier) { Box(square()) } }
+        host { check.reorder_mid.HaptureReorderRow(index = 1, itemCount = 3, onReorder = { f, t -> moved = f to t }, modifier = Modifier) { Box(square()) } }
         val start = red()!!
         rule.onNodeWithTag("host").performTouchInput {
             down(Offset(48.dp.toPx(), 48.dp.toPx()))
@@ -211,7 +211,7 @@ class GeneratedComposeBehaviorTest {
         sheetDismissed = false
         rule.setContent {
             Box(Modifier.testTag("host").size(360.dp, 560.dp).background(Color.White)) {
-                check.sheet_mid.MotionLabBottomSheet(onDismissed = { sheetDismissed = true }) { Box(Modifier.fillMaxSize().background(Color.Red)) }
+                check.sheet_mid.HaptureBottomSheet(onDismissed = { sheetDismissed = true }) { Box(Modifier.fillMaxSize().background(Color.Red)) }
             }
         }
         val peek = red()!!.top

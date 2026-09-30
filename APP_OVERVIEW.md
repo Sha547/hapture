@@ -1,6 +1,6 @@
-# Motion Lab: what the app contains
+# Hapture: what the app contains
 
-Motion Lab is an Android app (Jetpack Compose, package `com.motionlab.app`) for designing how an interaction *feels* on a real device, with real touch and real haptics, and then taking the result out as numbers and code for any platform.
+Hapture is an Android app (Jetpack Compose, package `com.klynstudios.hapture`) for designing how an interaction *feels* on a real device, with real touch and real haptics, and then taking the result out as numbers and code for any platform.
 
 The core idea: a motion is decided by a **trigger** (a drag, a tap, a press) and driven by a **spring**. You tune the spring by feel, and the app exports it in forms a designer or a developer on any platform can use.
 
@@ -58,7 +58,7 @@ Everything is generated from one **platform-neutral motion spec** (JSON): trigge
 
 - **Reduced motion:** every generated snippet has a Reduce Motion path (same stiffness, critically damped, no overshoot).
 - **Checks (motion lint):** flags sluggish settle, visible wobble, large overshoot on controls, jitter-prone stiff and under-damped springs, long stagger, missing haptics. Every check except long stagger has a one-tap fix (computed on tap, always within the sliders' range), with Undo for 10 seconds.
-- **Files:** experiments export and import as `.motionlab` files (versioned, defensively parsed).
+- **Files:** experiments export and import as `.hapture` files (versioned, defensively parsed).
 
 ---
 
@@ -101,14 +101,14 @@ A separate section for freehand sketching (not part of the motion pipeline):
 - Brushes: pen, marker, paint, spray, eraser
 - 12 colours plus a hue slider, size slider, four canvas colours
 - Undo, redo, clear, autosave
-- Export: **PNG** (saved to Pictures/Motion Lab, or shared), **SVG** (copied)
+- Export: **PNG** (saved to Pictures/Hapture, or shared), **SVG** (copied)
 
 ## 9. Home and everyday use
 
 - **Recent** experiments, with rename, delete, export.
 - **Pin** a favorite to the top (long-press).
 - **Undo on delete:** delete is instant with a 4-second Undo (experiments and doodles).
-- Import a `.motionlab` file.
+- Import a `.hapture` file.
 - Themes: **Paper, Stone, Graphite, Ink**, plus a "copy design tokens" export of the current theme.
 
 ---
@@ -120,9 +120,9 @@ Quiet editorial minimalism: Manrope type, warm monochrome, hairline borders inst
 ## 11. Code layout
 
 ```
-app/src/main/java/com/motionlab/app/
+app/src/main/java/com/klynstudios/hapture/
   core/        physics solvers, spec + lint, capture (fit, tracker), doodle model, sync server, haptics
-  data/        Room entities, DAOs, repositories, migrations, .motionlab file format
+  data/        Room entities, DAOs, repositories, migrations, .hapture file format
   export/      code generators (Compose per type, platform/ for the rest), spec + token exporters
   feature/     editor (all interaction screens), timeline, doodle, capture, home, common
   ui/          design system and theme
@@ -158,7 +158,7 @@ Important rule: `INSERT OR REPLACE` is only used for brand-new rows. Updating an
 - Video matching follows one solid-coloured object; it is not general tracking.
 - Live sync is gated by a 4-digit pairing code (5 wrong tries lock it for 30 s and change the code), but traffic is plain HTTP on the local network: it stops casual snooping, not someone capturing traffic. A shared link works on the same Wi-Fi only; some guest/café networks block device-to-device traffic.
 - Gesture exports are an honest representation of the release/settle spring; wiring it to a platform's own gesture system is left to the developer.
-- Not built: a .motionlab that carries screenshots or tokens.
+- Not built: a .hapture that carries screenshots or tokens.
 - Token drift compares pasted code against its own export stamp; a formatter that rewrites lines counts as an edit, and JSON exports (Lottie, spec) can't carry a stamp.
 - The predictive back editor's commit rule (a third of the way, or a flick) stands in for the system's; on a device the OS decides when a back swipe commits, which is why commit isn't a setting.
 - Screenshot images of deleted experiments stay on disk (the row goes, the file doesn't), so Undo can bring them back; nothing cleans them up yet.

@@ -1,5 +1,5 @@
 <resources>
-    <style name="Theme.MotionLab" parent="android:Theme.Material.NoActionBar">
+    <style name="Theme.Hapture" parent="android:Theme.Material.NoActionBar">
         <item name="android:statusBarColor">#0A0A0A</item>
         <item name="android:navigationBarColor">#0A0A0A</item>
         <item name="android:windowBackground">#0A0A0A</item>

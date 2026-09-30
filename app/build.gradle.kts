@@ -17,11 +17,11 @@ val keystoreProps = Properties().apply {
 }
 
 android {
-    namespace = "com.motionlab.app"
+    namespace = "com.klynstudios.hapture"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.motionlab.app"
+        applicationId = "com.klynstudios.hapture"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
