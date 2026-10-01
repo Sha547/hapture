@@ -37,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.klynstudios.hapture.data.DoodleEntity
@@ -60,6 +61,7 @@ import com.klynstudios.hapture.ui.design.IconKind
 import com.klynstudios.hapture.ui.design.ListRow
 import com.klynstudios.hapture.ui.design.LocalTokens
 import com.klynstudios.hapture.ui.design.PrimaryButton
+import com.klynstudios.hapture.ui.design.SecondaryButton
 import com.klynstudios.hapture.ui.design.SectionLabel
 import com.klynstudios.hapture.ui.design.Tag
 import com.klynstudios.hapture.ui.design.TextLink
@@ -105,6 +107,7 @@ fun HomeScreen(
     onDeleteToken: (MotionTokenEntity) -> Unit,
     onCapture: () -> Unit,
     onCompare: () -> Unit,
+    onHowItWorks: () -> Unit,
     feelSets: FeelSetsUi,
 ) {
     val t = LocalTokens.current
@@ -200,7 +203,7 @@ fun HomeScreen(
     }
 
     AppScreen(scrollable = true) {
-        Spacer(Modifier.height(72.dp))
+        Spacer(Modifier.height(48.dp))
 
         Column(Modifier.reveal(0)) {
             Text("Hapture", style = MaterialTheme.typography.displayMedium, color = t.ink)
@@ -210,6 +213,9 @@ fun HomeScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 color = t.inkSoft,
             )
+            Spacer(Modifier.height(16.dp))
+            // Brings back the first-launch tour, for anyone who skipped it.
+            SecondaryButton("Learn how to use Hapture", onClick = onHowItWorks, icon = IconKind.PLAY, modifier = Modifier.testTag("howItWorks"))
             Spacer(Modifier.height(24.dp))
             HomeDemo()
             Spacer(Modifier.height(28.dp))

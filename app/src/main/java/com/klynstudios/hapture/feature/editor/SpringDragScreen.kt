@@ -2,6 +2,7 @@ package com.klynstudios.hapture.feature.editor
 
 import com.klynstudios.hapture.core.spec.SpringSpec
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.VectorConverter
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Box
@@ -138,7 +139,11 @@ fun SpringDragScreen(
         persist()
     }
 
-    val offsetX = remember { Animatable(0f) }
+    // Where the shape is, relative to rest, on both axes.
+    val offset = remember { Animatable(Offset.Zero, Offset.VectorConverter) }
+    // The direction the curve measures along: the way the shape was last pulled. Plotting the distance along it
+    // (rather than straight-line distance) keeps overshoot visible as a dip past the rest line.
+    var axis by remember { mutableStateOf(Offset(1f, 0f)) }
     val boundPx = remember(density) { with(density) { 56.dp.toPx() } }
     val curveRangePx = remember(density) { with(density) { 160.dp.toPx() } }
     var dragging by remember { mutableStateOf(false) }
@@ -149,10 +154,11 @@ fun SpringDragScreen(
     val samples = remember { mutableStateListOf<Float>() }
     LaunchedEffect(Unit) {
         while (true) {
-            snapshotFlow { dragging || offsetX.isRunning }.first { it }
-            while (dragging || offsetX.isRunning) {
+            snapshotFlow { dragging || offset.isRunning }.first { it }
+            while (dragging || offset.isRunning) {
                 withFrameNanos {
-                    samples.add(offsetX.value)
+                    val v = offset.value
+                    samples.add(v.x * axis.x + v.y * axis.y)
                     if (samples.size > 120) samples.removeAt(0)
                 }
             }
@@ -176,36 +182,39 @@ fun SpringDragScreen(
                 StageObject(
                     style = objectStyle,
                     modifier = Modifier
-                        .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+                        .offset { IntOffset(offset.value.x.roundToInt(), offset.value.y.roundToInt()) }
                         .pointerInput(Unit) {
-                            var raw = 0f
+                            var raw = Offset.Zero
                             var tracker = VelocityTracker()
                             detectDragGestures(
                                 onDragStart = {
-                                    raw = offsetX.value
+                                    raw = offset.value
                                     tracker = VelocityTracker()
                                     dragging = true
                                     scope.launch { haptics.play(HapticEvent.Press) }
                                 },
                                 onDrag = { change, dragAmount ->
                                     change.consume()
-                                    raw += dragAmount.x
+                                    raw += dragAmount
                                     val k = ParameterMapping.resistance(resistanceT)
-                                    val visual = RubberBand.apply(raw, boundPx, k)
+                                    // Each axis rubber-bands on its own, so a diagonal pull resists on whichever edge it crosses.
+                                    val visual = Offset(RubberBand.apply(raw.x, boundPx, k), RubberBand.apply(raw.y, boundPx, k))
+                                    if (visual.getDistance() > 1f) axis = visual / visual.getDistance()
                                     // Track what's on screen, in a stable frame: the shape moves under the finger,
                                     // so change.position (local to it) would read close to zero speed.
-                                    tracker.addPosition(change.uptimeMillis, Offset(visual, 0f))
-                                    scope.launch { offsetX.snapTo(visual) }
+                                    tracker.addPosition(change.uptimeMillis, visual)
+                                    scope.launch { offset.snapTo(visual) }
                                 },
                                 onDragCancel = { dragging = false },
                                 onDragEnd = {
                                     dragging = false
-                                    val releaseVelocity = tracker.calculateVelocity().x
+                                    val v = tracker.calculateVelocity()
+                                    val releaseVelocity = Offset(v.x, v.y)
                                     val stiffness = ParameterMapping.stiffness(stiffnessT)
                                     val dampingRatio = ParameterMapping.dampingRatio(dampingT)
                                     scope.launch {
-                                        offsetX.animateTo(
-                                            targetValue = 0f,
+                                        offset.animateTo(
+                                            targetValue = Offset.Zero,
                                             animationSpec = spring(
                                                 dampingRatio = dampingRatio,
                                                 stiffness = stiffness,
@@ -224,7 +233,7 @@ fun SpringDragScreen(
                 )
             }
             Spacer(Modifier.height(12.dp))
-            Text("Drag the shape sideways and let go.", style = MaterialTheme.typography.bodySmall, color = t.inkSoft)
+            Text("Drag the shape in any direction and let go.", style = MaterialTheme.typography.bodySmall, color = t.inkSoft)
         }
         },
         controls = {

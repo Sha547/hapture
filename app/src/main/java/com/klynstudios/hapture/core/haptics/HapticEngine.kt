@@ -84,33 +84,27 @@ class HapticEngine(context: Context) {
         v.vibrate(build(v, effect))
     }
 
-    private fun build(v: Vibrator, effect: HapticEffect): VibrationEffect = when (effect) {
-        // No predefined "soft": a short low-amplitude pulse where the motor allows, else the lightest tick.
-        HapticEffect.SOFT ->
-            if (supportsAmplitudeControl) VibrationEffect.createOneShot(8, 40)
-            else predefinedOr(v, VibrationEffect.EFFECT_TICK, fallbackMs = 6, fallbackAmp = 40)
-        HapticEffect.TICK -> predefinedOr(v, VibrationEffect.EFFECT_TICK, fallbackMs = 8, fallbackAmp = 90)
-        HapticEffect.CLICK -> predefinedOr(v, VibrationEffect.EFFECT_CLICK, fallbackMs = 14, fallbackAmp = 120)
-        HapticEffect.IMPACT -> predefinedOr(v, VibrationEffect.EFFECT_HEAVY_CLICK, fallbackMs = 20, fallbackAmp = 200)
-        HapticEffect.HEAVY ->
-            if (supportsAmplitudeControl) VibrationEffect.createOneShot(32, 255)
-            else predefinedOr(v, VibrationEffect.EFFECT_HEAVY_CLICK, fallbackMs = 30, fallbackAmp = 255)
-        HapticEffect.SUCCESS -> predefinedOr(v, VibrationEffect.EFFECT_DOUBLE_CLICK, fallbackMs = 16, fallbackAmp = 150)
-    }
+    /** [support] per effect, asked once: the answer can't change while the app runs. */
+    private val supportCache = HashMap<HapticEffect, HapticSupport>()
 
-    private fun predefinedOr(
-        v: Vibrator,
-        predefinedEffect: Int,
-        fallbackMs: Long,
-        fallbackAmp: Int,
-    ): VibrationEffect {
-        return if (supportsPredefinedEffects) {
-            VibrationEffect.createPredefined(predefinedEffect)
-        } else if (supportsAmplitudeControl) {
-            VibrationEffect.createOneShot(fallbackMs, fallbackAmp.coerceIn(1, 255))
-        } else {
-            // Limited hardware: duration-only, default amplitude.
-            VibrationEffect.createOneShot(fallbackMs, VibrationEffect.DEFAULT_AMPLITUDE)
+    private fun build(v: Vibrator, effect: HapticEffect): VibrationEffect {
+        val support = supportCache.getOrPut(effect) { support(effect) }
+        // Android's own effect only when the phone says it can really play it. On basic motors the named
+        // effects all collapse into much the same buzz, so those phones get pulses that differ in length
+        // and strength instead, which a simple motor can render.
+        if (support == HapticSupport.EXACT || support == HapticSupport.UNKNOWN) {
+            when (effect) {
+                HapticEffect.SOFT -> if (supportsAmplitudeControl) return VibrationEffect.createOneShot(8, 40)
+                HapticEffect.HEAVY -> if (supportsAmplitudeControl) return VibrationEffect.createOneShot(32, 255)
+                HapticEffect.TICK -> return VibrationEffect.createPredefined(VibrationEffect.EFFECT_TICK)
+                HapticEffect.CLICK -> return VibrationEffect.createPredefined(VibrationEffect.EFFECT_CLICK)
+                HapticEffect.IMPACT -> return VibrationEffect.createPredefined(VibrationEffect.EFFECT_HEAVY_CLICK)
+                HapticEffect.SUCCESS -> return VibrationEffect.createPredefined(VibrationEffect.EFFECT_DOUBLE_CLICK)
+            }
         }
+        val pulse = HapticPulses.of(effect, supportsAmplitudeControl)
+        val amps = pulse.amplitudes?.toIntArray()
+        return if (amps != null) VibrationEffect.createWaveform(pulse.timingsMs.toLongArray(), amps, -1)
+        else VibrationEffect.createWaveform(pulse.timingsMs.toLongArray(), -1)
     }
 }

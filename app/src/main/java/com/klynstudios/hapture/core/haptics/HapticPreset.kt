@@ -6,7 +6,7 @@ enum class HapticEffect { SOFT, TICK, CLICK, IMPACT, HEAVY, SUCCESS }
 /** How faithfully this phone can play an effect, worst first (so the weakest of several is the minimum). */
 enum class HapticSupport(val note: String) {
     NONE("This phone has no vibration motor, so you won't feel it here. It's still saved and exported."),
-    APPROXIMATE("This phone can't play these exact effects; you'll feel a plainer buzz. Phones with better motors will feel the real thing."),
+    APPROXIMATE("This phone's motor can't play these effects exactly, so Hapture uses its own pulses instead, longer for firmer feels. Phones with better motors feel more refined."),
     UNKNOWN("This phone doesn't report which effects it supports, so what you feel may be a plain buzz."),
     EXACT("This phone plays this feel as designed."),
 }

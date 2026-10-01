@@ -105,7 +105,7 @@ private fun Picker(title: String, selected: Named, all: List<Named>, onPick: (Na
     SectionLabel(title, trailing = "${selected.label}  k ${selected.spring.stiffness.toInt()}  \u03b6 ${"%.2f".format(selected.spring.dampingRatio)}")
     Spacer(Modifier.height(10.dp))
     // Opens scrolled to the chosen one, so a pick further along the row (a Material spring, a token) is in view.
-    val state = rememberLazyListState(initialFirstVisibleItemIndex = all.indexOfFirst { it.label == selected.label }.coerceAtLeast(0))
+    val state = rememberLazyListState(initialFirstVisibleItemIndex = (all.indexOfFirst { it.label == selected.label } - 1).coerceAtLeast(0))
     LazyRow(state = state, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(all.size) { i -> Chip(all[i].label, selected = all[i].label == selected.label, onClick = { onPick(all[i]) }) }
     }
@@ -181,7 +181,7 @@ private fun RaceMode(seed: Named?) {
     SectionLabel("Blend", trailing = "A ${((1f - mixT) * 100).toInt()}  B ${(mixT * 100).toInt()}")
     ValueSlider("Mix", mixT, { mixT = it })
     Text(
-        "k ${mix.stiffness.toInt()}   z ${"%.2f".format(mix.dampingRatio)}   settles ${mix.settleMs} ms   overshoot ${mix.overshootPercent.toInt()}%",
+        "k ${mix.stiffness.toInt()}   \u03b6 ${"%.2f".format(mix.dampingRatio)}   settles ${mix.settleMs} ms   overshoot ${mix.overshootPercent.toInt()}%",
         style = MonoSmall, color = t.inkSoft,
     )
     Spacer(Modifier.height(6.dp))

@@ -1,10 +1,12 @@
 package com.klynstudios.hapture.feature.timeline
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -33,7 +35,8 @@ fun AddStepDialog(
 ) {
     val t = LocalTokens.current
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Column(Modifier.fillMaxSize().padding(24.dp)) {
+        // An opaque page, like the shape drawer: without it the timeline behind shows through the list.
+        Column(Modifier.fillMaxSize().background(t.canvas).navigationBarsPadding().padding(24.dp)) {
             Text("Add a step", style = MaterialTheme.typography.titleLarge, color = t.ink)
             Spacer(Modifier.height(8.dp))
             Text(

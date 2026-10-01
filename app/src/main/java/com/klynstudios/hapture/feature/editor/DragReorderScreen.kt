@@ -1,5 +1,8 @@
 package com.klynstudios.hapture.feature.editor
 
+import com.klynstudios.hapture.ui.design.LocalBackdropAction
+import com.klynstudios.hapture.ui.design.LocalBackdrop
+import androidx.compose.runtime.CompositionLocalProvider
 import com.klynstudios.hapture.core.spec.SpringSpec
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
@@ -176,6 +179,8 @@ fun DragReorderScreen(
         spring = SpringSpec(ParameterMapping.stiffness(stiffnessT), ParameterMapping.dampingRatio(dampingT)),
         stage = {
         Column(Modifier.reveal(0)) {
+            // The list fills the whole stage, so there's nowhere for a screenshot backdrop or its button to go.
+            CompositionLocalProvider(LocalBackdropAction provides null, LocalBackdrop provides null) {
             Stage(height = 220.dp) {
                 Column(Modifier.padding(horizontal = 20.dp)) {
                     order.forEachIndexed { slot, original ->
@@ -245,6 +250,7 @@ fun DragReorderScreen(
                         if (slot != order.lastIndex) Spacer(Modifier.height(ITEM_GAP))
                     }
                 }
+            }
             }
             Spacer(Modifier.height(12.dp))
             Text(

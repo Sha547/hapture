@@ -7,7 +7,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import com.klynstudios.hapture.ui.design.quietClickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -257,7 +257,7 @@ fun TriggerScreen(
                                 .width(56.dp).height(32.dp)
                                 .clip(CircleShape)
                                 .background(lerp(t.line, t.ink, p.value.coerceIn(0f, 1f)))
-                                .clickable {
+                                .quietClickable {
                                     on = !on
                                     scope.launch { haptics.play(HapticEvent.Snap) }
                                     scope.launch { p.animateTo(if (on) 1f else 0f, springSpec()) }
@@ -304,7 +304,7 @@ fun TriggerScreen(
                                         Modifier
                                             .testTag("triggerTab$i")
                                             .width(TriggerSpecs.TAB_WIDTH_DP.dp).height(40.dp)
-                                            .clickable {
+                                            .quietClickable {
                                                 tab = i
                                                 scope.launch { haptics.play(HapticEvent.Snap) }
                                                 scope.launch { p.animateTo(i / 2f, springSpec()) }
@@ -322,7 +322,7 @@ fun TriggerScreen(
                     }
                     TriggerKind.STAGGER_LIST -> {
                         val rise = with(density) { TriggerSpecs.riseDp(amountT).dp.toPx() }
-                        Column(Modifier.testTag("triggerTarget").clickable { replayList() }.padding(24.dp)) {
+                        Column(Modifier.testTag("triggerTarget").quietClickable { replayList() }.padding(start = 24.dp, end = 24.dp, top = 52.dp, bottom = 20.dp)) {
                             items.forEachIndexed { i, a ->
                                 Box(
                                     Modifier
@@ -343,7 +343,7 @@ fun TriggerScreen(
                             Modifier
                                 .testTag("triggerTarget")
                                 .size(120.dp)
-                                .clickable {
+                                .quietClickable {
                                     on = !on
                                     if (on) {
                                         scope.launch { haptics.play(HapticEvent.Impact) }

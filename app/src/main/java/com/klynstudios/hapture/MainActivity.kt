@@ -94,6 +94,8 @@ import com.klynstudios.hapture.feature.doodle.DoodleScreen
 import com.klynstudios.hapture.feature.capture.CaptureScreen
 import com.klynstudios.hapture.feature.compare.CompareScreen
 import com.klynstudios.hapture.data.CompareStore
+import com.klynstudios.hapture.data.IntroStore
+import com.klynstudios.hapture.feature.intro.IntroScreen
 import com.klynstudios.hapture.feature.home.HomeScreen
 import com.klynstudios.hapture.feature.home.NewExperimentScreen
 import com.klynstudios.hapture.feature.timeline.TimelineEditorScreen
@@ -126,6 +128,7 @@ private sealed interface Route {
     data class Timeline(val id: Long) : Route
     data class Doodle(val id: Long) : Route
     data object Capture : Route
+    data object Intro : Route
     /** [seed] fills lane A (from an editor's "Compare with"); Back returns to [back]. */
     data class Compare(val seedName: String? = null, val seed: SpringSpec? = null, val back: Route = Home) : Route
 }
@@ -153,6 +156,7 @@ class MainActivity : ComponentActivity() {
         val backdropRepository = BackdropRepository(applicationContext, database.backdropDao())
         val themeStore = ThemeStore(applicationContext)
         val compareStore = CompareStore(applicationContext)
+        val introStore = IntroStore(applicationContext)
 
         setContent {
             val reduceMotion = remember {
@@ -173,7 +177,8 @@ class MainActivity : ComponentActivity() {
             }
 
             HaptureTheme(themeId) {
-                var route by remember { mutableStateOf<Route>(Route.Home) }
+                // A first-time visitor lands on the intro; everyone else goes straight to Home.
+                var route by remember { mutableStateOf<Route>(if (introStore.seen()) Route.Home else Route.Intro) }
                 val scope = rememberCoroutineScope()
                 val tokens by tokenRepository.observeAll().collectAsState(initial = emptyList<MotionTokenEntity>())
 
@@ -193,7 +198,8 @@ class MainActivity : ComponentActivity() {
                     LocalSaveMotionToken provides { n, k, z -> scope.launch { tokenRepository.save(n, k, z) } },
                     LocalOpenCompare provides { n, spring -> route = Route.Compare(n, spring, back = route) },
                 ) {
-                PredictiveBackHandler(enabled = route !is Route.Home) { events ->
+                // The intro handles back itself (it steps back a page first).
+                PredictiveBackHandler(enabled = route !is Route.Home && route !is Route.Intro) { events ->
                     val from = route
                     swiped = from
                     try {
@@ -313,6 +319,7 @@ class MainActivity : ComponentActivity() {
                             tokens = tokens,
                             onCapture = { route = Route.Capture },
                             onCompare = { route = Route.Compare() },
+                            onHowItWorks = { route = Route.Intro },
                             onDeleteToken = { token -> scope.launch { tokenRepository.delete(token) } },
                         )
                     }
@@ -391,6 +398,11 @@ class MainActivity : ComponentActivity() {
                         )
                     }
                     }
+
+                    is Route.Intro -> IntroScreen(onDone = {
+                        introStore.markSeen()
+                        route = Route.Home
+                    })
 
                     is Route.Compare -> CompareScreen(
                         store = compareStore,

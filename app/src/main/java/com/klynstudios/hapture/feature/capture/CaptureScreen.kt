@@ -344,7 +344,7 @@ fun CaptureScreen(
                 }
                 val spec = MotionSpec("Captured", "captured", "release", spring, listOf(MotionTransition("progress", 0f, 1f, 0, spring)))
                 MotionLint.check(spec).forEach {
-                    Text("Note: " + it.message, style = MaterialTheme.typography.bodySmall, color = t.ink)
+                    Text((if (it.level == com.klynstudios.hapture.core.spec.LintIssue.Level.WARN) "Warning: " else "Note: ") + it.message, style = MaterialTheme.typography.bodySmall, color = t.ink)
                 }
                 pair?.let { p ->
                     Spacer(Modifier.height(16.dp))

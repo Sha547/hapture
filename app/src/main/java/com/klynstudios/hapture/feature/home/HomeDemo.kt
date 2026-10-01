@@ -31,6 +31,7 @@ import com.klynstudios.hapture.core.haptics.HapticEffect
 import com.klynstudios.hapture.core.haptics.HapticEngine
 import com.klynstudios.hapture.core.model.MotionPreset
 import com.klynstudios.hapture.core.physics.ParameterMapping
+import com.klynstudios.hapture.feature.common.SpringSquare
 import com.klynstudios.hapture.ui.design.Chip
 import com.klynstudios.hapture.ui.design.LocalTokens
 import com.klynstudios.hapture.ui.design.Stage
@@ -51,46 +52,9 @@ fun HomeDemo() {
     var preset by remember { mutableStateOf(MotionPreset.SNAPPY) }
     val demoPresets = listOf(MotionPreset.GENTLE, MotionPreset.SNAPPY, MotionPreset.BOUNCY)
 
-    Stage(height = 150.dp) {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .testTag("homeDemo")
-                .pointerInput(preset) {
-                    val reach = size.width * 0.36f
-                    detectDragGestures(
-                        onDragStart = { scope.launch { x.stop() } },
-                        onDrag = { change, delta ->
-                            change.consume()
-                            scope.launch { x.snapTo((x.value + delta.x).coerceIn(-reach, reach)) }
-                        },
-                        onDragEnd = {
-                            scope.launch {
-                                x.animateTo(
-                                    0f,
-                                    spring(
-                                        dampingRatio = ParameterMapping.dampingRatio(preset.dampingT),
-                                        stiffness = ParameterMapping.stiffness(preset.stiffnessT),
-                                        visibilityThreshold = 0.5f,
-                                    ),
-                                )
-                                haptics.play(HapticEffect.TICK)
-                            }
-                        },
-                    )
-                },
-            contentAlignment = Alignment.Center,
-        ) {
-            Box(
-                Modifier
-                    .size(56.dp)
-                    .graphicsLayer { translationX = x.value }
-                    .background(t.ink, RoundedCornerShape(16.dp)),
-            )
-        }
-    }
+    SpringSquare(preset.stiffnessT, preset.dampingT, haptics, height = 150.dp, testTag = "homeDemo")
     Spacer(Modifier.height(10.dp))
-    Text("Drag the square and let go. The buttons change how it moves.", style = MaterialTheme.typography.bodySmall, color = t.inkSoft)
+    Text("Drag the square anywhere and let go. The buttons change how it moves.", style = MaterialTheme.typography.bodySmall, color = t.inkSoft)
     Spacer(Modifier.height(10.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         demoPresets.forEach { p -> Chip(p.displayName, selected = preset == p, onClick = { preset = p }) }

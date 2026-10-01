@@ -231,7 +231,7 @@ fun DoodleScreen(
                         persist()
                     }
                 })
-                TextLink("Clear", icon = IconKind.PLUS, onClick = {
+                TextLink("Clear", icon = IconKind.CLOSE, onClick = {
                     if (strokes.isNotEmpty()) {
                         redo.clear()
                         strokes.clear()

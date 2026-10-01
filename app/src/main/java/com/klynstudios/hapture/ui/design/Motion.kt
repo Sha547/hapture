@@ -34,6 +34,14 @@ val LocalReduceMotion = compositionLocalOf { false }
 /** Android's animator scale is 0 when animations are switched off. */
 fun isMotionReduced(animatorDurationScale: Float): Boolean = animatorDurationScale == 0f
 
+/**
+ * A plain click with no ripple. For things that answer a tap with their own motion (a switch, a heart, a
+ * replaying list), where the default grey ripple would flash a box behind them.
+ */
+fun Modifier.quietClickable(onClick: () -> Unit): Modifier = composed {
+    clickable(interactionSource = remember { MutableInteractionSource() }, indication = null, onClick = onClick)
+}
+
 /** A click that presses in a hair and springs back. Does nothing extra when motion is reduced. */
 fun Modifier.pressable(onClick: () -> Unit, scaleTo: Float = 0.97f): Modifier = composed {
     val source = remember { MutableInteractionSource() }

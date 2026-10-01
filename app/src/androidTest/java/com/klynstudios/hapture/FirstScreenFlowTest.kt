@@ -22,7 +22,7 @@ class FirstScreenFlowTest {
     @Test
     fun homeShowsALiveDemoThatRespondsToDragsAndToTheFeelButtons() {
         composeTestRule.onNodeWithText("Tune how things move in an app, by feel. Then copy the code into your project.").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Drag the square and let go. The buttons change how it moves.").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Drag the square anywhere and let go. The buttons change how it moves.").assertIsDisplayed()
         composeTestRule.onNodeWithText("Bouncy").performClick()
         composeTestRule.onNodeWithTag("homeDemo").performTouchInput {
             down(center)

@@ -24,10 +24,10 @@ android {
         applicationId = "com.klynstudios.hapture"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.klynstudios.hapture.HaptureTestRunner"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -46,6 +46,10 @@ android {
     }
 
     buildTypes {
+        // Debug builds get their own app ID, so they install alongside the Play version instead of clashing with it.
+        debug {
+            applicationIdSuffix = ".debug"
+        }
         release {
             // Unsigned (and so not uploadable) until keystore.properties exists.
             signingConfigs.findByName("release")?.let { signingConfig = it }

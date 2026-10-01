@@ -78,6 +78,14 @@ class GeneratedComposeBehaviorTest {
         rule.onNodeWithTag("host").performTouchInput { up() }
         rule.waitForIdle()
         assertEquals("springs back to where it started", start.cx, red()!!.cx, 3f)
+
+        // And vertically: it's a free drag, not a horizontal slider.
+        rule.onNodeWithTag("host").performTouchInput { down(Offset(48.dp.toPx(), 48.dp.toPx())); moveBy(Offset(0f, 160.dp.toPx())) }
+        rule.waitForIdle()
+        assertTrue("the square must follow a vertical drag", red()!!.cy - start.cy > 60f)
+        rule.onNodeWithTag("host").performTouchInput { up() }
+        rule.waitForIdle()
+        assertEquals("springs back vertically too", start.cy, red()!!.cy, 3f)
     }
 
     // ---------- Magnetic snap ----------

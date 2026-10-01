@@ -197,6 +197,28 @@ fun PrimaryButton(label: String, onClick: () -> Unit, modifier: Modifier = Modif
     }
 }
 
+/** Outlined counterpart to [PrimaryButton]: a hairline border, no fill. For the second most important action. */
+@Composable
+fun SecondaryButton(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: IconKind? = null) {
+    val t = LocalTokens.current
+    val shape = RoundedCornerShape(t.radiusControl)
+    Row(
+        modifier = modifier
+            .pressable(onClick, scaleTo = 0.98f)
+            .clip(shape)
+            .border(t.hairline, t.line, shape)
+            .padding(horizontal = 16.dp, vertical = 11.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center,
+    ) {
+        if (icon != null) {
+            AppIcon(icon, tint = t.ink, size = 16.dp)
+            Spacer(Modifier.width(8.dp))
+        }
+        Text(label, style = MaterialTheme.typography.labelMedium, color = t.ink)
+    }
+}
+
 /** Understated text action with a trailing arrow, like a link in a paragraph. */
 @Composable
 fun TextLink(label: String, onClick: () -> Unit, modifier: Modifier = Modifier, icon: IconKind = IconKind.FORWARD) {

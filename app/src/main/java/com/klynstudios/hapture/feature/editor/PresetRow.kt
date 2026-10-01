@@ -58,14 +58,17 @@ internal fun SpringPresets(
     val t = LocalTokens.current
     Column {
         PresetRow(selected = selected, onSelect = onPreset)
-        Spacer(Modifier.height(16.dp))
+        Spacer(Modifier.height(18.dp))
+        Text("MATERIAL 3", style = MaterialTheme.typography.labelSmall, color = t.inkSoft)
+        Spacer(Modifier.height(10.dp))
         MaterialSpring.entries.groupBy { it.scheme }.forEach { (scheme, springs) ->
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    "M3 ${scheme.lowercase()}",
+                    scheme,
                     style = MaterialTheme.typography.bodySmall,
                     color = t.inkSoft,
-                    modifier = Modifier.width(96.dp),
+                    maxLines = 1,
+                    modifier = Modifier.width(84.dp),
                 )
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(springs) { m ->

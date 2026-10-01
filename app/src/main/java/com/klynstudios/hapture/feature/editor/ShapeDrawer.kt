@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -74,6 +75,7 @@ fun ShapeDrawer(
             Modifier
                 .fillMaxSize()
                 .background(t.canvas)
+                .navigationBarsPadding()
                 .padding(24.dp),
         ) {
             Text("Draw a shape", style = MaterialTheme.typography.titleLarge, color = t.ink)
