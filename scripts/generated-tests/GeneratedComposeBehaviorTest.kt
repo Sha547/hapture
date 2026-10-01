@@ -156,7 +156,6 @@ class GeneratedComposeBehaviorTest {
         assertEquals("returns to rest", start.cy, red()!!.cy, 3f)
     }
 
-    // ---------- Pinch zoom ----------
 
     @Test fun pinchZoomGrowsWhileHeldAndReturnsToOneOnRelease() {
         host { check.zoom_mid.HapturePinchZoom(Modifier.size(200.dp)) { Box(Modifier.size(200.dp).background(Color.Red)) } }
@@ -172,8 +171,6 @@ class GeneratedComposeBehaviorTest {
         rule.waitForIdle()
         assertEquals("releases back to 1x", before.toFloat(), red()!!.count.toFloat(), before * 0.03f)
     }
-
-    // ---------- Reorder ----------
 
     private var moved: Pair<Int, Int>? = null
 
@@ -202,8 +199,6 @@ class GeneratedComposeBehaviorTest {
         assertEquals(null, moved)
         assertEquals(start.cy, red()!!.cy, 3f)
     }
-
-    // ---------- Bottom sheet ----------
 
     private var sheetDismissed = false
 

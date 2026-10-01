@@ -1,6 +1,11 @@
+---
+title: Hapture privacy policy
+permalink: /privacy/
+---
+
 # Hapture privacy policy
 
-Last updated: [date]
+Last updated: 1 October 2026
 
 Hapture does not collect, store on a server, share or sell any personal data.
 
@@ -17,6 +22,6 @@ Hapture does not collect, store on a server, share or sell any personal data.
 
 **Children.** The app is not directed at children and collects no data from anyone.
 
-**Contact.** [your email]
+**Contact.** shafsquare54@gmail.com
 
 If this policy changes, the updated version will be posted at this address with a new date.

@@ -103,7 +103,7 @@ the sliders. The Figma plugin can follow it too.
 
 There's no account, no analytics, no ads and no cloud. Experiments live on the
 phone. Live sync is off until you start it, stays on your Wi-Fi, and needs a
-pairing code. The full policy is in [store/PRIVACY.md](store/PRIVACY.md).
+pairing code. The full policy is in [docs/privacy.md](docs/privacy.md), and it's published at https://sha547.github.io/hapture/privacy/.
 
 ## Building it
 
@@ -159,7 +159,11 @@ recordings, but it isn't general-purpose tracking.
 
 An iOS version may come later.
 
-## Credits
+## License and credits
+
+Hapture is released under the [Apache License 2.0](LICENSE). The license covers
+the code; it doesn't give anyone the right to use the Hapture name or logo for
+their own app.
 
 Made by Klyn Studios. Typeset in
 [Manrope](https://github.com/sharanda/manrope) and

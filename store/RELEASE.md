@@ -10,9 +10,9 @@
    keyAlias=upload
    keyPassword=...
    ```
-3. In Play Console: create the app, enable Play App Signing (default), fill the store listing from LISTING.md, upload the assets, host PRIVACY.md and paste its URL.
+3. In Play Console: create the app, enable Play App Signing (default), fill the store listing from LISTING.md, upload the assets, paste the privacy policy URL: https://sha547.github.io/hapture/privacy/ (source: docs/privacy.md).
 
-## Data safety form (matches PRIVACY.md)
+## Data safety form (matches docs/privacy.md)
 - Does the app collect or share user data? **No.**
 - Data encrypted in transit / deletion request: not applicable (nothing collected).
 - Permissions declared: VIBRATE, INTERNET (local live-sync server only).
