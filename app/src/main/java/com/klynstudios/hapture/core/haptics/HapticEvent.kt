@@ -1,10 +1,8 @@
 package com.klynstudios.hapture.core.haptics
 
 /**
- * Haptics are events tied to interaction state, not a raw on/off toggle
- * (spec §17). Only the events Phase 1 actually triggers are implemented;
- * the rest of the sealed hierarchy from the spec is stubbed in for the
- * types the editor will grow into.
+ * The moments in an interaction that can carry a haptic: press, release,
+ * crossing a threshold, snapping into place, an impact, a success.
  */
 sealed class HapticEvent {
     companion object {

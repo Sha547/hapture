@@ -2,7 +2,7 @@ package com.klynstudios.hapture.export
 
 /**
  * Same deterministic-template policy as [SpringCodeGenerator]. The dismissal
- * decision and tilt are copy-pasted verbatim from
+ * decision and tilt are copied as is from
  * [com.klynstudios.hapture.core.physics.SwipeSolver]; the fling is Compose's own
  * `exponentialDecay` and the return is `spring()`, fed the same numbers the
  * live preview uses. Distances are emitted in dp and converted at runtime, so

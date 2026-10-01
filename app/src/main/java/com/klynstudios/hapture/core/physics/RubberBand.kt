@@ -3,16 +3,12 @@ package com.klynstudios.hapture.core.physics
 import kotlin.math.abs
 
 /**
- * Rubber-band overscroll (spec §13): d' = d / (1 + k|d|).
+ * Rubber-band overscroll: d' = d / (1 + k|d|).
  *
- * This is the *only* custom solver in the drag path. Spring physics itself
- * is intentionally NOT reimplemented here -- the editor drives the real
- * Compose `spring()` AnimationSpec directly (see EditorScreen), so whatever
- * feels right in the preview is byte-for-byte what the exported code runs.
- * Rubber-band and (later) magnetic/snap solvers don't have a Compose-native
- * equivalent, so they're implemented once here and the exact same formula
- * is what CodeGenerator emits into exported Kotlin -- one source of truth,
- * copy-pasted into two call sites, never two implementations that can drift.
+ * The springs themselves aren't reimplemented anywhere: editors animate with
+ * Compose's own `spring()`. Rubber-banding has no Compose equivalent, so the
+ * formula lives here and SpringCodeGenerator writes the same formula into the
+ * exported code.
  */
 object RubberBand {
 

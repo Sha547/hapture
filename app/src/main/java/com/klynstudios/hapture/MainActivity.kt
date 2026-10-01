@@ -103,18 +103,6 @@ import com.klynstudios.hapture.ui.theme.defaultThemeId
 import kotlinx.coroutines.launch
 
 /**
- * No account, no cloud, no onboarding wall (spec §32). Opening the app
- * drops straight into Home, backed by a local Room database (spec §33) --
- * experiments persist across launches.
- *
- * Navigation is a plain sealed-class + mutableStateOf switch, not the
- * Navigation-Compose library -- a handful of screens and no back stack deeper
- * than one level (everything's onBack goes straight to Home) doesn't earn
- * that dependency yet. A Timeline (spec §26, grouping multiple experiments)
- * is the first thing that references another saved item rather than just
- * holding its own state; still doesn't need real deep-linkable routes.
- */
-/**
  * Opening a screen slides it in a little from the right while it fades in, and going back reverses that.
  * Small on purpose (a tenth of the width) and driven by a spring; with Reduce Motion it is a plain cut.
  */
@@ -126,6 +114,11 @@ private fun screenTransition(backward: Boolean, reduce: Boolean): ContentTransfo
         (fadeOut(tween(120)) + slideOutHorizontally(slide) { -dir * it / 10 })
 }
 
+/**
+ * Navigation is a sealed class in a mutableStateOf rather than Navigation-Compose.
+ * There are only a few screens and the back stack is at most two deep (Compare
+ * remembers the editor that opened it), which doesn't justify the dependency.
+ */
 private sealed interface Route {
     data object Home : Route
     data object NewExperiment : Route

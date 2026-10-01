@@ -20,7 +20,7 @@ import com.klynstudios.hapture.ui.design.DashedGuide
 import com.klynstudios.hapture.ui.design.LocalTokens
 
 /**
- * Live position curve (spec §22). Shows the last [samples.size] readings of
+ * Live position curve. Shows the last [samples.size] readings of
  * the dragged object's x-offset so a developer can see *why* an interaction
  * feels the way it does -- overshoot, settle time, bounce count -- while
  * they're still dragging it.

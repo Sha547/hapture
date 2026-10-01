@@ -10,12 +10,10 @@ import com.klynstudios.hapture.core.model.ObjectShape
 import com.klynstudios.hapture.core.model.ObjectStyle
 
 /**
- * A saved experiment (spec §26-27). Configuration is stored as discrete
- * typed columns rather than the JSON blob the spec suggests -- with only
- * two interaction types and a handful of Float params each, a shared
- * nullable-columns shape is simpler than adding a serialization dependency
- * for it. Revisit as JSON (or a real per-type table) once enough
- * interaction types exist that this table gets unwieldy.
+ * A saved experiment. Each interaction's settings are their own nullable
+ * columns rather than a JSON blob, so Room migrations stay simple ALTER TABLEs
+ * and every value is typed. With 13 interactions the table is getting wide;
+ * a per-type table would be the next step if it grows much further.
  */
 @Entity(tableName = "experiments")
 data class ExperimentEntity(
@@ -25,7 +23,7 @@ data class ExperimentEntity(
     val createdAt: Long,
     val updatedAt: Long,
 
-    // Shared across every spring-based interaction (spec §11).
+    // Every interaction has these.
     val stiffnessT: Float,
     val dampingT: Float,
 

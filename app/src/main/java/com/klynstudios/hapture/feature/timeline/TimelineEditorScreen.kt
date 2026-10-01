@@ -81,15 +81,11 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 /**
- * A saved sequence of experiments, played one after another. There is no
- * unified physics engine behind this -- Swipe and Fling isn't the same kind
- * of motion as Spring Drag, so nothing here pretends to render one continuous
- * scene across types. What it *does* show, honestly: pacing (the scrub bar,
- * proportioned by each step's own settle time) and, for whichever step the
- * playhead is currently inside, that step's own real step-response curve
- * ([SpringMath.stepResponse]) driving a small preview dot in that step's own
- * look. Scrubbing and Play both just move a single time value; nothing is
- * simulated beyond what's already tested in [SpringMath].
+ * A saved sequence of experiments, played one after another. The steps are
+ * different kinds of motion, so this doesn't try to render one continuous
+ * scene. It shows pacing: the scrub bar is proportioned by each step's settle
+ * time, and a preview dot follows the current step's step response
+ * ([SpringMath.stepResponse]). Scrubbing and Play both just move one time value.
  */
 @Composable
 fun TimelineEditorScreen(

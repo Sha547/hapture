@@ -27,7 +27,7 @@ import com.klynstudios.hapture.ui.design.TextLink
 import kotlin.math.abs
 
 /**
- * Quick-start row (spec §24). Tapping a chip sets Stiffness/Damping to that
+ * Quick-start row. Tapping a chip sets Stiffness/Damping to that
  * preset's values -- it's a starting point, not a locked-in animation, so
  * the sliders remain freely tunable afterward.
  */

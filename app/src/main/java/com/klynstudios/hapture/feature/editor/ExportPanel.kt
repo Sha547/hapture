@@ -64,7 +64,7 @@ import kotlinx.coroutines.delay
  * built until a row is tapped.
  *
  * - Checks: what a motion reviewer would flag (see [MotionLint])
- * - Compose / Design spec / CSS: the original three
+ * - Compose, design spec (Figma numbers), CSS easing
  * - Other platforms: SwiftUI, Flutter, React Native, Web, Lottie and the
  *   neutral spec, all generated from one [MotionSpec]. Gesture editors don't
  *   pass [motion]; it is derived from the same design JSON they already build.

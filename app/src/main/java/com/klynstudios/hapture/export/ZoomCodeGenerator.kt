@@ -2,7 +2,7 @@ package com.klynstudios.hapture.export
 
 /**
  * Same deterministic-template policy as [SpringCodeGenerator]. The bounded
- * rubber-band is copy-pasted verbatim from [com.klynstudios.hapture.core.physics.ZoomSolver];
+ * rubber-band is copied as is from [com.klynstudios.hapture.core.physics.ZoomSolver];
  * the release is a real `spring()`, always back to 1x -- see that solver's
  * doc comment for why every interaction here ends at a real rest state.
  */

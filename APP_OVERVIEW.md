@@ -163,7 +163,7 @@ Important rule: `INSERT OR REPLACE` is only used for brand-new rows. Updating an
 - The predictive back editor's commit rule (a third of the way, or a flick) stands in for the system's; on a device the OS decides when a back swipe commits, which is why commit isn't a setting.
 - Screenshot images of deleted experiments stay on disk (the row goes, the file doesn't), so Undo can bring them back; nothing cleans them up yet.
 
-## 15. Phase 10 (schema v13)
+## 15. Compare, sync with pairing, chained springs and feel sets (schema v13)
 
 - **Compare** (Home): race two springs over one shared curve with a Blend slider, or play a blind round (guess which preset is A; best streak kept).
 - **Sync v2**: pairing code + session tokens, `/pair`, `/exports`, and a browser bridge page served by the phone at `/` (all platforms' code, live, copy/download); "Copy bridge link" gives a pre-paired link (30 min), and "Show QR code" shows it as a QR (own encoder, no dependency; verified to scan with an independent decoder). The Figma plugin asks for the code.

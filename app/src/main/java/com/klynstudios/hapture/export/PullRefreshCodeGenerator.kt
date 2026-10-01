@@ -4,7 +4,7 @@ import com.klynstudios.hapture.core.physics.PullRefreshSolver
 
 /**
  * Same deterministic-template policy as [SpringCodeGenerator]. The trigger
- * check and the rubber band are copy-pasted verbatim from
+ * check and the rubber band are copied as is from
  * [com.klynstudios.hapture.core.physics.PullRefreshSolver] and
  * [com.klynstudios.hapture.core.physics.RubberBand]; the hold is a plain `delay`,
  * the return is a real `spring()`.

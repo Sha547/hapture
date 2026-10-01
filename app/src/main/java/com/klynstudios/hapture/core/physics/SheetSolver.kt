@@ -6,7 +6,7 @@ import kotlin.math.abs
  * Bottom-sheet decisions. Heights are "how much of the sheet is showing", in
  * px, 0 = hidden and increasing upward. The settle animation is a real
  * `spring()`; only where to settle and the resistance past full live here.
- * Same policy as the other solvers: one formula, copy-pasted verbatim into the
+ * Same policy as the other solvers: one formula, copied as is into the
  * exported Kotlin.
  */
 object SheetSolver {

@@ -18,9 +18,7 @@ import org.junit.runner.RunWith
 
 /**
  * Real SQLite, real migrations, no mocks. Each test hand-builds a database
- * exactly as an earlier app version would have left it on a phone (the same
- * shape verified by hand against the emulator during development -- see the
- * README's Phase 4 note), then opens it through [HaptureDatabase] with the
+ * the way an older version of the app would have left it, then opens it through [HaptureDatabase] with the
  * production migration chain and checks both the data and the new columns'
  * defaults. A schema mismatch or a bad migration fails loudly here instead of
  * on someone's real, unwiped device.

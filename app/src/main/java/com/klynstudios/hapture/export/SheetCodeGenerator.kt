@@ -2,7 +2,7 @@ package com.klynstudios.hapture.export
 
 /**
  * Same deterministic-template policy as [SpringCodeGenerator]. The settle rule
- * and the resistance above full are copy-pasted verbatim from
+ * and the resistance above full are copied as is from
  * [com.klynstudios.hapture.core.physics.SheetSolver]; the movement is a real
  * `spring()` with the numbers the live preview uses. Detents are emitted as
  * fractions of the container, so the sheet scales to any screen or parent.

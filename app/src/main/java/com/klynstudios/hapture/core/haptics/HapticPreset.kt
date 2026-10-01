@@ -1,6 +1,6 @@
 package com.klynstudios.hapture.core.haptics
 
-/** The physical sensations available (spec §24), lightest to heaviest, plus the two-beat success. */
+/** The physical sensations available, lightest to heaviest, plus the two-beat success. */
 enum class HapticEffect { SOFT, TICK, CLICK, IMPACT, HEAVY, SUCCESS }
 
 /** How faithfully this phone can play an effect, worst first (so the weakest of several is the minimum). */
@@ -13,7 +13,7 @@ enum class HapticSupport(val note: String) {
 
 /**
  * A feel for the whole interaction: which sensation each [HapticEvent] gets.
- * Haptics are tied to interaction state (spec §17), so a preset is a table from
+ * Haptics are tied to interaction state, so a preset is a table from
  * event to effect, not a single buzz. [CRISP] is what the app has always done.
  */
 enum class HapticPreset(val label: String, val description: String) {

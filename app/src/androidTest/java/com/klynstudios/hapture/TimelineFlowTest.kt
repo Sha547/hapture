@@ -28,17 +28,15 @@ import org.junit.runner.RunWith
  * A timeline, end to end on the real navigation and Room database: build one
  * from two freshly created experiments, reorder its steps, adjust a gap,
  * remove a step, and confirm what's left survives leaving and reopening.
- * Same rigor as [ComposeFlowTest] and [ShapeDrawerFlowTest].
  *
  * The device's `hapture.db` accumulates rows across every test in a run,
  * so anything created here is renamed to a name unique to this test right
  * away (Home's long-press rename, same as a person would use) rather than
  * relying on auto-generated names like "Spring Drag 2" staying predictable.
  *
- * This suite is also what caught a real bug: [com.klynstudios.hapture.data.TimelineRepository]'s
- * first version used `OnConflictStrategy.REPLACE` to update an existing
- * timeline, which is SQLite's delete-then-reinsert and silently cascade-
- * deleted the very steps being touched. See that class's doc comment.
+ * Updating a timeline must never go through `OnConflictStrategy.REPLACE`: SQLite
+ * implements it as delete-then-insert, which cascade-deletes the steps. The
+ * reorder and rename checks here would catch that.
  */
 @RunWith(AndroidJUnit4::class)
 class TimelineFlowTest {

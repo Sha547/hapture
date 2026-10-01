@@ -2,7 +2,7 @@ package com.klynstudios.hapture.core.model
 
 /**
  * Ship with carefully tuned presets, parameterized rather than hardcoded
- * animations (spec §24). Each preset is just a (stiffnessT, dampingT) pair
+ * animations. Each preset is just a (stiffnessT, dampingT) pair
  * in the same 0f..1f normalized space every slider already uses -- selecting
  * one sets the sliders to those values rather than triggering a separate
  * canned animation, so it's tunable afterward like anything else, and it's

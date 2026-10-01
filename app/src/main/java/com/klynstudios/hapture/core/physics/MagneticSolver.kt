@@ -3,7 +3,7 @@ package com.klynstudios.hapture.core.physics
 import kotlin.math.abs
 
 /**
- * Magnetic attraction (spec §14): as a dragged object nears a target within
+ * Magnetic attraction: as a dragged object nears a target within
  * [threshold], it's pulled toward it, F = strength * (1 - d/threshold).
  *
  * This is a *visual assist* applied to the followed position while still

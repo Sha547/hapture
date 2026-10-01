@@ -23,9 +23,7 @@ import com.klynstudios.hapture.ui.design.TextLink
 /**
  * Preview the motion on the thing you're actually designing: a pill feels
  * different from a circle, a solid square different from a light outline --
- * and CUSTOM is whatever you draw (spec-independent: this is a hand-drawn
- * shape, not the app's own earlier "doodle" visual style, which was tried
- * and dropped). Changes apply live to the stage and are saved with the
+ * and CUSTOM is whatever you draw. Changes apply live to the stage and are saved with the
  * experiment.
  */
 @OptIn(ExperimentalLayoutApi::class)

@@ -3,17 +3,13 @@ package com.klynstudios.hapture.export
 import kotlin.math.round
 
 /**
- * Deterministic Compose code generation (spec §28-29): the same MotionConfig
- * always produces the same Kotlin, byte for byte. No AST/KotlinPoet here on
- * purpose -- these are 10-30 line snippets, not whole files, so a plain
- * template plus fixed-precision formatting is simpler and just as correct,
- * and it's trivial to golden-test string output.
+ * Turns a tuned spring into a Compose snippet. The same input always gives the
+ * same output, byte for byte. These are short snippets, so a string template is
+ * simpler than KotlinPoet and easy to golden-test.
  *
- * IMPORTANT (fidelity guarantee): stiffness/dampingRatio below are the exact
- * Float values fed into the live-preview Animatable's spring() spec in
- * EditorScreen. This function only formats them -- it never recomputes or
- * re-derives them -- so the emitted spring() call reproduces the on-device
- * preview exactly, not an approximation of it.
+ * The stiffness and damping ratio passed in are the exact values the editor's
+ * live preview animates with. This only formats them and never recomputes them,
+ * so the exported spring() matches what you felt on the phone.
  */
 object SpringCodeGenerator {
 

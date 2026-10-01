@@ -69,9 +69,8 @@ private val ITEM_LABELS = listOf("Item 1", "Item 2", "Item 3", "Item 4")
  * row; cross [ReorderSolver]'s threshold into a neighbor's slot and releasing
  * settles it there with a real `spring()`. Only the dragged row animates on
  * release -- the others snap straight to their new slot rather than sliding
- * to make room live while you drag. That's a real, honest simplification
- * (every other screen's "spring only fires on release" rule stays true here
- * too, instead of also live-animating neighbors mid-drag), not a bug.
+ * to make room live while you drag. That's intentional: like every
+ * other editor, the spring only runs on release.
  */
 @Composable
 fun DragReorderScreen(

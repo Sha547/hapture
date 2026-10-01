@@ -6,7 +6,7 @@ import kotlin.math.abs
  * Swipe-to-dismiss decisions. The fling itself is Compose's real
  * `exponentialDecay` and the return is a real `spring()` (see SwipeFlingScreen),
  * so only the *decision* and the tilt live here. Same policy as the other
- * solvers: one formula, copy-pasted verbatim into the exported Kotlin.
+ * solvers: one formula, copied as is into the exported Kotlin.
  */
 object SwipeSolver {
 

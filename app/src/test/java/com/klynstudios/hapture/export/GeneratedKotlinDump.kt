@@ -13,7 +13,7 @@ import java.io.File
 
 /**
  * Writes every Kotlin snippet the app hands to developers, at minimum, default and maximum slider values, into
- * build/generated-check so it can be compiled against a real Compose project (see the README's compile check).
+ * build/generated-check so it can be compiled against a real Compose project (scripts/check-generated-kotlin.sh does that).
  * Not an assertion test: it only produces files.
  */
 class GeneratedKotlinDump {

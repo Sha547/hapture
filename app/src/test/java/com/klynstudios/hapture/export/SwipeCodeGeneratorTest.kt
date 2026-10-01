@@ -26,7 +26,7 @@ class SwipeCodeGeneratorTest {
 
     @Test fun `it carries the same decision and tilt formulas as the solver`() {
         val c = code()
-        // The three rules of SwipeSolver.dismissDirection, verbatim.
+        // The three rules of SwipeSolver.dismissDirection.
         assertTrue(c.contains("kotlin.math.abs(velocity) >= velocityThreshold) return if (velocity > 0f) 1 else -1"))
         assertTrue(c.contains("kotlin.math.abs(offset) >= distance) return if (offset > 0f) 1 else -1"))
         assertTrue(c.contains("maxTilt * (offset / (distance * 3f)).coerceIn(-1f, 1f)"))

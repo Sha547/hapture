@@ -2,7 +2,7 @@ package com.klynstudios.hapture.export
 
 /**
  * Same deterministic-template policy as [SpringCodeGenerator]. The swap rule
- * is copy-pasted verbatim from [com.klynstudios.hapture.core.physics.ReorderSolver];
+ * is copied as is from [com.klynstudios.hapture.core.physics.ReorderSolver];
  * the settle is a real `spring()`. Only the dragged row's own displacement is
  * driven by a tunable spring here -- the emitted snippet lets the framework's
  * own list-diffing animate the rest, since that's the idiomatic way to do

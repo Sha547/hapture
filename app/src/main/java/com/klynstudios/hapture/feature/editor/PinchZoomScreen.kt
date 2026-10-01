@@ -51,12 +51,9 @@ import kotlin.math.roundToInt
 /**
  * Pinch to zoom: two fingers scale the object, rubber-banded past its bounds
  * ([ZoomSolver], the same formula every other bounded drag here reuses).
- * Every interaction in this app ends at a real, demonstrable spring settle --
- * for Pinch to Zoom that's always back to 1x, on any release, in or out of
- * bounds; see [ZoomSolver]'s doc comment. Two fingers, so there's no
- * "dragging" boolean here the way single-pointer screens have one -- the live
- * curve gates on the [Animatable] alone, which is enough: it's running for
- * the whole gesture (every `snapTo` counts) and for the settle afterward.
+ * Any release settles back to 1x. With two fingers there's no single
+ * "dragging" flag, so the curve samples while the [Animatable] is running,
+ * which covers both the gesture (each `snapTo`) and the settle.
  */
 @Composable
 fun PinchZoomScreen(

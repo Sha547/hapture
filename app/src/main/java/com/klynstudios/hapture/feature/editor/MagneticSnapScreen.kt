@@ -62,7 +62,7 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 /**
- * Phase 1 remainder (spec §14-15): drag between three discrete targets.
+ * Drag between three discrete targets.
  * Getting close to one pulls the card toward it (magnetic assist, still
  * under your finger); releasing hands off to the nearest target and a real
  * spring, exactly like SpringDragScreen -- snapping isn't its own bespoke

@@ -63,11 +63,10 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 /**
- * Phase 1 flagship interaction (spec §1, §51): drag the card, it follows
- * your finger, resists past a boundary, releases into a real spring, and
- * taps once when it settles. Every slider re-tunes the *same* spring the
- * card is animating with -- there's no separate "preview math" to keep in
- * sync with the export.
+ * Drag the card: it follows your finger, resists past a boundary, springs
+ * back on release and taps once when it settles. The sliders retune the same
+ * spring the card animates with, so there's no separate preview maths to
+ * keep in sync with the export.
  */
 @Composable
 fun SpringDragScreen(
@@ -144,15 +143,9 @@ fun SpringDragScreen(
     val curveRangePx = remember(density) { with(density) { 160.dp.toPx() } }
     var dragging by remember { mutableStateOf(false) }
 
-    // Sampled once per frame for the live curve, but only while there's
-    // actually something to plot -- dragging, or the spring still settling.
-    // Sampling unconditionally for the screen's whole lifetime (the previous
-    // version) meant Compose was never idle while this screen was open: no
-    // real cost most of the time, but it made the screen impossible to
-    // synchronize with in an instrumented test, which is how this was found
-    // (see ComposeFlowTest). A SnapshotStateList add/trim every frame still
-    // isn't free (spec §34) but at 120 points it's cheap relative to the
-    // spring/gesture work already happening per frame while it's running.
+    // One sample per frame for the curve, but only while dragging or settling.
+    // Sampling all the time keeps Compose from ever going idle, which breaks
+    // waitForIdle() in the UI tests.
     val samples = remember { mutableStateListOf<Float>() }
     LaunchedEffect(Unit) {
         while (true) {
@@ -179,7 +172,6 @@ fun SpringDragScreen(
         spring = SpringSpec(ParameterMapping.stiffness(stiffnessT), ParameterMapping.dampingRatio(dampingT)),
         stage = {
         Column(Modifier.reveal(0)) {
-            // --- Interactive object: the visual hero (spec §20) ---
             Stage {
                 StageObject(
                     style = objectStyle,

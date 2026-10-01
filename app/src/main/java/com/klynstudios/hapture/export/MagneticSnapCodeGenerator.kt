@@ -4,8 +4,8 @@ import kotlin.math.round
 
 /**
  * Same deterministic-template policy as [SpringCodeGenerator]. The
- * magnetic-pull and nearest-target math emitted here is copy-pasted
- * verbatim from [com.klynstudios.hapture.core.physics.MagneticSolver] and
+ * magnetic-pull and nearest-target math emitted here is copied as is
+ * from [com.klynstudios.hapture.core.physics.MagneticSolver] and
  * [com.klynstudios.hapture.core.physics.SnapPoints] -- one formula, two call
  * sites, so preview and export can't drift apart.
  */

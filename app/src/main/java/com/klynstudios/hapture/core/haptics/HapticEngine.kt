@@ -7,7 +7,7 @@ import android.os.Vibrator
 import android.os.VibratorManager
 
 /**
- * Device -> capability detection -> best supported effect (spec §19).
+ * Plays haptic effects with whatever the phone's motor supports.
  * Never lets missing hardware make the app feel broken: every branch below
  * degrades to *something* rather than silently doing nothing, down to a
  * plain 1.13.0+ compatible legacy vibrate() as the last resort.

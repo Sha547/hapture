@@ -73,7 +73,7 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
 /**
- * No account, no cloud requirement, no onboarding wall (spec §32) --
+ * No account, no cloud requirement, no onboarding wall:
  * opening the app lands here, with saved experiments one tap away.
  * Long-press a row to rename or delete it. "Appearance" switches the theme
  * and exports its tokens.

@@ -18,7 +18,7 @@ import com.klynstudios.hapture.ui.design.LocalTokens
 import com.klynstudios.hapture.ui.design.TopBar
 import com.klynstudios.hapture.ui.design.reveal
 
-/** Interaction type picker (spec §39's "New Experiment" list). */
+/** Picks the interaction a new experiment starts from. */
 @Composable
 fun NewExperimentScreen(
     onBack: () -> Unit,

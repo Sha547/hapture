@@ -34,7 +34,7 @@ object SpringCompare {
     /** Time axis long enough for the slowest spring, with a little tail. */
     fun spanMs(springs: List<SpringSpec>): Int = ((springs.maxOfOrNull { it.settleMs } ?: 0) * 1.1f).toInt().coerceAtLeast(200)
 
-    /** [count] samples of every spring's step response on one shared clock, so curves overlay honestly. */
+    /** [count] samples of every spring's step response on one shared clock, so the curves line up when overlaid. */
     fun curves(springs: List<SpringSpec>, count: Int = 96): List<List<Float>> {
         val span = spanMs(springs) / 1000f
         return springs.map { s ->

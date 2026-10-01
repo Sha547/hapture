@@ -61,8 +61,8 @@ import kotlin.math.roundToInt
  * to before feeling resistance), cross the trigger line and it holds there
  * (simulating real work happening) before a real `spring()` brings it back.
  * Let go short and it springs straight back, nothing triggered. The trigger
- * check is [PullRefreshSolver]; the hold is honestly nominal -- there's no
- * real network call behind it, just a timed delay.
+ * check is [PullRefreshSolver]; the hold is just a timed delay standing in
+ * for real work.
  */
 @Composable
 fun PullRefreshScreen(

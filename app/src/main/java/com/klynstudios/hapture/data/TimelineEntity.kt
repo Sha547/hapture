@@ -7,9 +7,8 @@ import androidx.room.PrimaryKey
 import com.klynstudios.hapture.core.haptics.HapticEffect
 
 /**
- * A saved sequence of existing experiments played one after another (spec's
- * "Timeline" -- see the README's Phase 7 note). Deliberately thin: a name and
- * timestamps, no motion parameters of its own. Everything about *how* a step
+ * A saved sequence of existing experiments played one after another. Just a
+ * name and timestamps, with no motion parameters of its own. Everything about *how* a step
  * moves belongs to the experiment it references; a timeline only decides
  * order and pacing (see [TimelineStepEntity]).
  */

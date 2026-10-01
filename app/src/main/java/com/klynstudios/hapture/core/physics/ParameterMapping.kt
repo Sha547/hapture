@@ -4,7 +4,7 @@ import androidx.compose.animation.core.Spring
 
 /**
  * Hapture does not confront the user with raw engineering values on the
- * default sliders (spec §12). Each slider is 0f..1f and gets mapped here to
+ * default sliders. Each slider is 0f..1f and gets mapped here to
  * the range the underlying Compose AnimationSpec actually expects.
  *
  * These ranges deliberately span Compose's own named constants
