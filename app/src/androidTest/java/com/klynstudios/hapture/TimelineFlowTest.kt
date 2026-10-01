@@ -68,7 +68,8 @@ class TimelineFlowTest {
         val yBefore = rowY(magnetName) - rowY(springName)
         assertTrue("magnet should start below spring", yBefore > 0)
         composeTestRule.onNodeWithTag("moveUp_$magnetName").performScrollTo().performClick()
-        composeTestRule.waitForIdle()
+        // The move is a database write on another thread, which waitForIdle() doesn't wait for.
+        composeTestRule.waitUntil(5_000) { rowY(magnetName) < rowY(springName) }
         val yAfter = rowY(magnetName) - rowY(springName)
         assertTrue("magnet should now sit above spring", yAfter < 0)
 

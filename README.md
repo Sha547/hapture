@@ -23,10 +23,10 @@ by trying things rather than by guessing.
 
 ## What you can do with it
 
-### Thirteen interactions
+### Fourteen interactions
 
 Spring drag, magnetic snap, swipe and fling, bottom
-sheet, pull to refresh, pinch to zoom, predictive back, drag to reorder,
+sheet, pull to refresh, pinch to zoom, card expand, predictive back, drag to reorder,
 toggle, button press, tab indicator, staggered list and a like burst. Each one
 is a real, touchable component driven by a spring you control with two
 sliders, plus whatever extra settings that interaction needs (detents for the

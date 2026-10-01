@@ -248,7 +248,7 @@ private val WORDS = listOf(
     ),
     Triple(
         "What's inside",
-        "13 interactions to tune",
+        "${ExperimentType.entries.size} interactions to tune",
         "From a simple drag to bottom sheets and Android's back swipe. Each one starts from sensible defaults and saves as you go.",
     ),
     Triple(

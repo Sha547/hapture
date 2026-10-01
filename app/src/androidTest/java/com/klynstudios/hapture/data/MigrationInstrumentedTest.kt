@@ -39,7 +39,7 @@ class MigrationInstrumentedTest {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         return Room.databaseBuilder(context, HaptureDatabase::class.java, dbName)
             .addMigrations(
-                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14,
+                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
             )
             .build()
             .also { db = it }
@@ -312,7 +312,7 @@ class MigrationInstrumentedTest {
                     val name = c.getString(0)
                     if (name in listOf("token_sets", "token_set_items", "experiment_backdrops", "index_token_set_items_setId")) continue
                     var sql = c.getString(1)
-                    if (name == "experiments") sql = sql.replace(Regex(",\\s*`(chain|back)\\w+` (TEXT|REAL)"), "")
+                    if (name == "experiments") sql = sql.replace(Regex(",\\s*`(chain|back|expand)\\w+` (TEXT|REAL)"), "")
                     ddl += sql
                 }
             }
@@ -366,7 +366,7 @@ class MigrationInstrumentedTest {
             f.rawQuery("SELECT name, sql FROM sqlite_master WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'android_%' AND name != 'room_master_table'", null).use { c ->
                 while (c.moveToNext()) {
                     var sql = c.getString(1)
-                    if (c.getString(0) == "experiments") sql = sql.replace(Regex(",\\s*`back\\w+` REAL"), "")
+                    if (c.getString(0) == "experiments") sql = sql.replace(Regex(",\\s*`(back|expand)\\w+` REAL"), "")
                     ddl += sql
                 }
             }
@@ -394,6 +394,47 @@ class MigrationInstrumentedTest {
             val read = repo.get(back.id)!!
             assertEquals(0.8f, read.backShrinkT!!, 1e-4f)
             assertEquals(0.1f, read.backShiftT!!, 1e-4f)
+        }
+    }
+
+    @Test
+    fun v14DatabaseGainsCardExpandColumnsAndKeepsItsExperiments() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        // The v14 shape: what Room builds now, minus the two columns v15 added.
+        val fresh = "migration-fresh14.db"
+        context.deleteDatabase(fresh)
+        Room.databaseBuilder(context, HaptureDatabase::class.java, fresh).build().apply { openHelper.writableDatabase; close() }
+        val ddl = ArrayList<String>()
+        SQLiteDatabase.openDatabase(context.getDatabasePath(fresh).path, null, SQLiteDatabase.OPEN_READONLY).use { f ->
+            f.rawQuery("SELECT name, sql FROM sqlite_master WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'android_%' AND name != 'room_master_table'", null).use { c ->
+                while (c.moveToNext()) {
+                    var sql = c.getString(1)
+                    if (c.getString(0) == "experiments") sql = sql.replace(Regex(",\\s*`expand\\w+` REAL"), "")
+                    ddl += sql
+                }
+            }
+        }
+        context.deleteDatabase(fresh)
+
+        SQLiteDatabase.openOrCreateDatabase(rawDbFile(), null).use { raw ->
+            ddl.forEach { raw.execSQL(it) }
+            raw.execSQL("INSERT INTO experiments (type,name,createdAt,updatedAt,stiffnessT,dampingT,backShrinkT,backShiftT) VALUES ('PREDICTIVE_BACK','Old Back',1,2,0.3,0.6,0.5,0.4)")
+            raw.version = 14
+        }
+
+        runBlocking {
+            val database = openMigrated()
+            val old = database.experimentDao().observeAll().first().single()
+            assertEquals("Old Back", old.name)
+            assertEquals(0.4f, old.backShiftT!!, 1e-4f)
+            assertNull(old.expandCornerT)
+
+            val repo = ExperimentRepository(database.experimentDao())
+            val card = repo.createDefault(ExperimentType.CARD_EXPAND)
+            repo.save(card.copy(expandCornerT = 0.9f, expandFadeT = 0.2f))
+            val read = repo.get(card.id)!!
+            assertEquals(0.9f, read.expandCornerT!!, 1e-4f)
+            assertEquals(0.2f, read.expandFadeT!!, 1e-4f)
         }
     }
 }

@@ -12,7 +12,7 @@ Tune spring animations by feel on your phone, then export code for any platform.
 Hapture is a motion design tool you use with your hands. Tune a spring on a real device, with real touch and real haptics, then take the numbers and the code with you.
 
 FEEL IT, DON'T GUESS IT
-Thirteen interactions, each driven by a spring you can tune with two sliders: spring drag, magnetic snap, swipe and fling, bottom sheet, pull to refresh, pinch to zoom, predictive back, drag to reorder, toggle, button press, tab indicator, staggered list and like burst. The stage stays on screen while you tune, and a live readout shows settle time and overshoot the moment a slider moves. Eight presets to start from, four haptic feels, and a note on whether your phone can actually play each one.
+Fourteen interactions, each driven by a spring you can tune with two sliders: spring drag, magnetic snap, swipe and fling, bottom sheet, pull to refresh, pinch to zoom, card expand (a card growing into a full page), predictive back, drag to reorder, toggle, button press, tab indicator, staggered list and like burst. The stage stays on screen while you tune, and a live readout shows settle time and overshoot the moment a slider moves. Eight presets to start from, four haptic feels, and a note on whether your phone can actually play each one.
 
 BUILT FOR ANDROID
 Start from Material 3's own springs (standard and expressive, fast, default and slow) and see at a glance how close your spring is to Material's. Tune Android's predictive back gesture, how far the page shrinks and leans as you swipe, and export a ready PredictiveBackHandler. Tablets, foldables and landscape get a side-by-side layout: the stage on one side, the controls on the other.

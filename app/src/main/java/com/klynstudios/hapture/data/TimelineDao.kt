@@ -50,6 +50,13 @@ interface TimelineDao {
     suspend fun updateStep(step: TimelineStepEntity)
 
     /**
+     * Rewrites several steps in one transaction. Reordering touches every step's position; written one at a
+     * time, anything watching the steps could see a half-done order in between.
+     */
+    @Update
+    suspend fun updateSteps(steps: List<TimelineStepEntity>)
+
+    /**
      * Adds [deltaMs] to a step's gap in one statement, clamped to 0..[maxMs]. Relative on purpose: two quick
      * taps each add their share, where two "set to what I saw + 100" writes would both land on the same value.
      */

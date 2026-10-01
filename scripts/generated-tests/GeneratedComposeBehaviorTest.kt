@@ -88,6 +88,20 @@ class GeneratedComposeBehaviorTest {
         assertEquals("springs back vertically too", start.cy, red()!!.cy, 3f)
     }
 
+    // ---------- Card expand ----------
+
+    @Test fun cardExpandOpensIntoAPageAndClosesAgain() {
+        host { check.card_expand_mid.HaptureCardExpand(color = Color.Red) }
+        val card = red()!!
+        rule.onNodeWithTag("haptureExpandCard").performClick()
+        rule.waitForIdle()
+        val page = red()!!
+        assertTrue("the page is much bigger than the card (${card.count} -> ${page.count} red px)", page.count > card.count * 3)
+        rule.onNodeWithTag("haptureExpandPage").performClick()
+        rule.waitForIdle()
+        assertEquals("back to the card's size", card.count.toFloat(), red()!!.count.toFloat(), card.count * 0.05f)
+    }
+
     // ---------- Magnetic snap ----------
 
     @Test fun magneticSnapMovesAndSettlesOnATarget() {

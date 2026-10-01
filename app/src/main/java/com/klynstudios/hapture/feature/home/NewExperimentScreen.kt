@@ -79,6 +79,12 @@ fun NewExperimentScreen(
                 onClick = { onPick(ExperimentType.PINCH_ZOOM) },
             )
             ListRow(
+                title = "Card expand", subtitle = "A card grows into a full page",
+                leading = IconKind.EXPAND,
+                trailing = { AppIcon(IconKind.FORWARD, tint = t.inkSoft, size = 18.dp) },
+                onClick = { onPick(ExperimentType.CARD_EXPAND) },
+            )
+            ListRow(
                 title = "Predictive back", subtitle = "Android's back swipe: shrink, lean, spring",
                 leading = IconKind.BACK,
                 trailing = { AppIcon(IconKind.FORWARD, tint = t.inkSoft, size = 18.dp) },

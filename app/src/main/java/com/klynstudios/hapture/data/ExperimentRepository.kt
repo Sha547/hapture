@@ -57,6 +57,7 @@ class ExperimentRepository(private val dao: ExperimentDao) {
             ExperimentType.STAGGER_LIST -> "Staggered List"
             ExperimentType.LIKE_BURST -> "Like Burst"
             ExperimentType.PREDICTIVE_BACK -> "Predictive Back"
+            ExperimentType.CARD_EXPAND -> "Card Expand"
         }
         val name = if (count == 0) baseName else "$baseName ${count + 1}"
         val now = System.currentTimeMillis()
@@ -136,6 +137,17 @@ class ExperimentRepository(private val dao: ExperimentDao) {
                 zoomMaxT = 0.5f,
                 // Larger, so the scale change actually reads clearly at rest.
                 objectSizeT = 0.7f,
+            )
+            ExperimentType.CARD_EXPAND -> ExperimentEntity(
+                type = type,
+                name = name,
+                createdAt = now,
+                updatedAt = now,
+                // A container transform reads best calm: Material's standard default, no bounce.
+                stiffnessT = ParameterMapping.stiffnessT(MaterialSpring.STANDARD_DEFAULT.stiffness),
+                dampingT = ParameterMapping.dampingT(MaterialSpring.STANDARD_DEFAULT.dampingRatio),
+                expandCornerT = 0.4f,
+                expandFadeT = 0.4f,
             )
             ExperimentType.PREDICTIVE_BACK -> ExperimentEntity(
                 type = type,

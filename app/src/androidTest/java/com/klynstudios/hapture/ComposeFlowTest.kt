@@ -88,7 +88,7 @@ class ComposeFlowTest {
     fun everyInteractionTypeOpensAndShowsItsExportSectionWithoutCrashing() {
         val types = listOf(
             "Spring drag", "Magnetic snap", "Swipe and fling", "Bottom sheet",
-            "Pull to refresh", "Pinch to zoom", "Predictive back", "Drag to reorder",
+            "Pull to refresh", "Pinch to zoom", "Card expand", "Predictive back", "Drag to reorder",
             "Toggle", "Button press", "Tab indicator", "Staggered list", "Like burst",
         )
         for (type in types) {

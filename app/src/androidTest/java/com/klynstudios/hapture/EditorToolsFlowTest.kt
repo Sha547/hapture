@@ -10,6 +10,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeRight
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -86,6 +87,20 @@ class EditorToolsFlowTest {
         rule.waitForIdle()
         // Survives a swipe and still shows its own export.
         rule.onNodeWithText("Compose code").performScrollTo().assertExists()
+    }
+
+    @Test
+    fun aCardOpensIntoAPageAndClosesAgain() {
+        open("Card expand")
+        rule.onNodeWithTag("expandCard1").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("expandPage").assertExists()
+        val page = rule.onNodeWithTag("expandPage").fetchSemanticsNode().size
+        val stage = rule.onNodeWithTag("expandStage").fetchSemanticsNode().size
+        assertTrue("the page fills the stage ($page vs $stage)", page.width >= stage.width - 2 && page.height >= stage.height - 2)
+        rule.onNodeWithTag("expandPage").performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag("expandCard1").assertExists()
     }
 
     private fun AndroidComposeTestRule<*, *>.waitUntilTextExists(text: String, timeoutMillis: Long = 5_000) {

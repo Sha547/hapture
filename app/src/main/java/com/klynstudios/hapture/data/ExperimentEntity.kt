@@ -74,6 +74,11 @@ data class ExperimentEntity(
     val backShrinkT: Float? = null,
     val backShiftT: Float? = null,
 
+    // Card expand only (added in schema v15): the card's corner radius, and how long its contents take to
+    // hand over to the full page's.
+    val expandCornerT: Float? = null,
+    val expandFadeT: Float? = null,
+
     // How the interaction feels in the hand (added in schema v3).
     @ColumnInfo(defaultValue = "'CRISP'") val hapticPreset: HapticPreset = HapticPreset.CRISP,
 
@@ -116,4 +121,5 @@ enum class ExperimentType {
     STAGGER_LIST,
     LIKE_BURST,
     PREDICTIVE_BACK,
+    CARD_EXPAND,
 }

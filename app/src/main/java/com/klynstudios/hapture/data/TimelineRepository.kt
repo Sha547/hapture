@@ -48,7 +48,7 @@ class TimelineRepository(private val dao: TimelineDao) {
     suspend fun removeStep(step: TimelineStepEntity) {
         dao.deleteStep(step)
         val remaining = dao.getSteps(step.timelineId)
-        TimelineOrdering.repositioned(remaining).forEach { dao.updateStep(it) }
+        dao.updateSteps(TimelineOrdering.repositioned(remaining))
         touch(step.timelineId)
     }
 
@@ -57,7 +57,7 @@ class TimelineRepository(private val dao: TimelineDao) {
         val steps = dao.getSteps(step.timelineId)
         val from = steps.indexOfFirst { it.id == step.id }
         if (from < 0) return
-        TimelineOrdering.moved(steps, from, from + delta).forEach { dao.updateStep(it) }
+        dao.updateSteps(TimelineOrdering.moved(steps, from, from + delta))
         touch(step.timelineId)
     }
 

@@ -64,6 +64,8 @@ object ProjectFile {
         e.triggerStaggerT?.let { params.put("triggerStaggerT", r(it)) }
         e.backShrinkT?.let { params.put("backShrinkT", r(it)) }
         e.backShiftT?.let { params.put("backShiftT", r(it)) }
+        e.expandCornerT?.let { params.put("expandCornerT", r(it)) }
+        e.expandFadeT?.let { params.put("expandFadeT", r(it)) }
         e.chainProperty?.let {
             params.put("chainProperty", it)
             e.chainAtT?.let { v -> params.put("chainAtT", r(v)) }
@@ -151,6 +153,10 @@ object ProjectFile {
                 resistanceT = req("resistanceT") ?: return Result.Error("Missing resistance."),
                 zoomMinT = req("zoomMinT") ?: return Result.Error("Missing minimum zoom."),
                 zoomMaxT = req("zoomMaxT") ?: return Result.Error("Missing maximum zoom."),
+            )
+            ExperimentType.CARD_EXPAND -> base.copy(
+                expandCornerT = req("expandCornerT") ?: return Result.Error("Missing corner radius."),
+                expandFadeT = req("expandFadeT") ?: return Result.Error("Missing content fade."),
             )
             ExperimentType.PREDICTIVE_BACK -> base.copy(
                 backShrinkT = req("backShrinkT") ?: return Result.Error("Missing shrink."),

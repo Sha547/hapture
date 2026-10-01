@@ -20,7 +20,7 @@ import kotlin.math.sin
 enum class IconKind {
     BACK, FORWARD, UP, DOWN, PLUS, SPRING, MAGNET, SWIPE, SHEET, COPY, SHARE, CHECK, TIMELINE, PLAY, PAUSE,
     REFRESH, ZOOM, REORDER, PIN, BRUSH, UNDO, REDO,
-    TOGGLE, TAP, TABS, STAGGER, HEART, CLOSE,
+    TOGGLE, TAP, TABS, STAGGER, HEART, CLOSE, EXPAND,
 }
 
 // One family: 24-unit grid, one stroke weight, round caps and joins.
@@ -39,6 +39,12 @@ private val strokes: Map<IconKind, List<List<Offset>>> = mapOf(
     IconKind.DOWN to listOf(pts(12f, 5f, 12f, 19f), pts(6f, 13f, 12f, 19f, 18f, 13f)),
     IconKind.PLUS to listOf(pts(12f, 5f, 12f, 19f), pts(5f, 12f, 19f, 12f)),
     IconKind.CLOSE to listOf(pts(6.5f, 6.5f, 17.5f, 17.5f), pts(17.5f, 6.5f, 6.5f, 17.5f)),
+    // A small card with an arrow growing out of its corner.
+    IconKind.EXPAND to listOf(
+        pts(4f, 13f, 11f, 13f, 11f, 20f, 4f, 20f, 4f, 13f),
+        pts(13f, 11f, 20f, 4f),
+        pts(14f, 4f, 20f, 4f, 20f, 10f),
+    ),
     IconKind.SPRING to listOf(pts(12f, 2.5f, 12f, 5f, 18f, 7.5f, 6f, 11f, 18f, 14.5f, 6f, 18f, 12f, 20.5f, 12f, 22f)),
     IconKind.MAGNET to listOf(
         pts(6f, 3.5f, 6f, 11f) + arc(12f, 11f, 6f, 180f, 0f) + pts(18f, 3.5f),

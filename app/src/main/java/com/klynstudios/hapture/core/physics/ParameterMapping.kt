@@ -82,5 +82,11 @@ object ParameterMapping {
     /** 0f (stays centred) .. 1f (leans well over) -> sideways shift at a full swipe, as a fraction of the page width */
     fun backShiftFraction(t: Float): Float = lerp(0f, 0.12f, t.coerceIn(0f, 1f))
 
+    /** 0f (nearly square) .. 1f (very round) -> the card's corner radius, in dp */
+    fun expandCornerDp(t: Float): Float = lerp(4f, 32f, t.coerceIn(0f, 1f))
+
+    /** 0f (a quick swap) .. 1f (a slow cross-fade) -> how long the card's contents fade into the page's, in ms */
+    fun expandFadeMs(t: Float): Float = lerp(60f, 360f, t.coerceIn(0f, 1f))
+
     private fun lerp(a: Float, b: Float, t: Float): Float = a + (b - a) * t
 }

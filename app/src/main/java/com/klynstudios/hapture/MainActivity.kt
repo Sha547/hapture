@@ -50,6 +50,8 @@ import com.klynstudios.hapture.data.MIGRATION_10_11
 import com.klynstudios.hapture.data.MIGRATION_11_12
 import com.klynstudios.hapture.data.MIGRATION_12_13
 import com.klynstudios.hapture.data.MIGRATION_13_14
+import com.klynstudios.hapture.data.MIGRATION_14_15
+import com.klynstudios.hapture.feature.editor.CardExpandScreen
 import com.klynstudios.hapture.data.BackdropEntity
 import com.klynstudios.hapture.core.spec.SpringSpec
 import com.klynstudios.hapture.feature.common.LocalOpenCompare
@@ -146,7 +148,7 @@ class MainActivity : ComponentActivity() {
             HaptureDatabase::class.java,
             "hapture.db",
         ).addMigrations(
-            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14,
+            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
         ).build()
         val repository = ExperimentRepository(database.experimentDao())
         val timelineRepository = TimelineRepository(database.timelineDao())
@@ -366,6 +368,12 @@ class MainActivity : ComponentActivity() {
                         )
 
                         ExperimentType.PINCH_ZOOM -> PinchZoomScreen(
+                            experimentId = current.id,
+                            repository = repository,
+                            onBack = { route = Route.Home },
+                        )
+
+                        ExperimentType.CARD_EXPAND -> CardExpandScreen(
                             experimentId = current.id,
                             repository = repository,
                             onBack = { route = Route.Home },

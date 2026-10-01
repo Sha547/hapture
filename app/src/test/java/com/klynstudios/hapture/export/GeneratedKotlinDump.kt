@@ -34,6 +34,7 @@ class GeneratedKotlinDump {
             write("pull_$label", PullRefreshCodeGenerator.generate(k, z, P.pullTriggerDp(t), P.pullHoldMs(t), r))
             write("zoom_$label", ZoomCodeGenerator.generate(k, z, P.zoomMinScale(t), P.zoomMaxScale(t), r))
             write("reorder_$label", ReorderCodeGenerator.generate(k, z, 56f, 28f))
+            write("card_expand_$label", CardExpandCodeGenerator.generate(k, z, P.expandCornerDp(t), P.expandFadeMs(t)))
             write("predictive_back_$label", PredictiveBackCodeGenerator.generate(k, z, P.backMinScale(t), P.backShiftFraction(t)))
             TriggerKind.entries.forEach { kind ->
                 write("trigger_${kind.name}_$label", ComposeGenericGenerator.generate(TriggerSpecs.build(kind, kind.name, t, t, t, t, "crisp")))

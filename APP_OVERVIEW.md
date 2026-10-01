@@ -6,11 +6,11 @@ The core idea: a motion is decided by a **trigger** (a drag, a tap, a press) and
 
 - Minimum Android 8.0 (API 26), target 35
 - Local-first: no account, no cloud, no onboarding wall
-- Storage: Room (SQLite), currently schema **v14**
+- Storage: Room (SQLite), currently schema **v15**
 
 ---
 
-## 1. Interaction types (13)
+## 1. Interaction types (14)
 
 ### Gesture-driven
 | Type | What you tune |
@@ -22,6 +22,7 @@ The core idea: a motion is decided by a **trigger** (a drag, a tap, a press) and
 | **Pull to refresh** | Trigger distance, hold time, continuous resistance |
 | **Pinch to zoom** | Min and max zoom, resistance, always settles back to 1x |
 | **Drag to reorder** | Swap threshold, spring settle of the dragged row |
+| **Card expand** | A card grows into a full page and back (container transform): corner radius, content fade |
 | **Predictive back** | Android's back swipe: how far the page shrinks and leans, and the spring that finishes or cancels it |
 
 ### Trigger-driven (tap or press)

@@ -10,7 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     entities = [ExperimentEntity::class, TimelineEntity::class, TimelineStepEntity::class, TimelineHapticEntity::class, DoodleEntity::class, MotionTokenEntity::class,
         TokenSetEntity::class, TokenSetItemEntity::class, BackdropEntity::class,
     ],
-    version = 14,
+    version = 15,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -187,5 +187,13 @@ val MIGRATION_13_14 = object : Migration(13, 14) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE experiments ADD COLUMN backShrinkT REAL")
         db.execSQL("ALTER TABLE experiments ADD COLUMN backShiftT REAL")
+    }
+}
+
+/** v15: card expand's two settings (nullable columns, so every existing row is unchanged). */
+val MIGRATION_14_15 = object : Migration(14, 15) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE experiments ADD COLUMN expandCornerT REAL")
+        db.execSQL("ALTER TABLE experiments ADD COLUMN expandFadeT REAL")
     }
 }
