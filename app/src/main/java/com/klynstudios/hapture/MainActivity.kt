@@ -29,28 +29,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.room.Room
 import com.klynstudios.hapture.data.ExperimentEntity
-import com.klynstudios.hapture.data.ExperimentRepository
 import com.klynstudios.hapture.data.ExperimentType
-import com.klynstudios.hapture.data.MIGRATION_1_2
-import com.klynstudios.hapture.data.MIGRATION_2_3
-import com.klynstudios.hapture.data.MIGRATION_3_4
-import com.klynstudios.hapture.data.MIGRATION_4_5
-import com.klynstudios.hapture.data.MIGRATION_5_6
-import com.klynstudios.hapture.data.MIGRATION_6_7
-import com.klynstudios.hapture.data.MIGRATION_7_8
-import com.klynstudios.hapture.data.MIGRATION_8_9
-import com.klynstudios.hapture.data.MIGRATION_9_10
-import com.klynstudios.hapture.data.MIGRATION_10_11
-import com.klynstudios.hapture.data.MIGRATION_11_12
-import com.klynstudios.hapture.data.MIGRATION_12_13
-import com.klynstudios.hapture.data.MIGRATION_13_14
-import com.klynstudios.hapture.data.MIGRATION_14_15
 import com.klynstudios.hapture.feature.editor.CardExpandScreen
 import com.klynstudios.hapture.data.BackdropEntity
 import com.klynstudios.hapture.core.spec.SpringSpec
@@ -64,9 +50,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.unit.dp
 import kotlin.coroutines.cancellation.CancellationException
-import com.klynstudios.hapture.data.MotionTokenRepository
-import com.klynstudios.hapture.data.BackdropRepository
-import com.klynstudios.hapture.data.TokenSetRepository
 import com.klynstudios.hapture.feature.editor.BackdropHost
 import com.klynstudios.hapture.data.TokenSetWithItems
 import com.klynstudios.hapture.data.spring
@@ -76,13 +59,10 @@ import com.klynstudios.hapture.data.MotionTokenEntity
 import com.klynstudios.hapture.feature.common.LocalMotionTokens
 import com.klynstudios.hapture.feature.common.LocalSaveMotionToken
 import androidx.compose.runtime.CompositionLocalProvider
-import com.klynstudios.hapture.data.DoodleRepository
 import com.klynstudios.hapture.data.DoodleEntity
-import com.klynstudios.hapture.data.HaptureDatabase
 import com.klynstudios.hapture.data.ProjectFile
 import com.klynstudios.hapture.data.ThemeStore
 import com.klynstudios.hapture.data.TimelineEntity
-import com.klynstudios.hapture.data.TimelineRepository
 import com.klynstudios.hapture.feature.editor.BottomSheetScreen
 import com.klynstudios.hapture.feature.editor.DragReorderScreen
 import com.klynstudios.hapture.feature.editor.MagneticSnapScreen
@@ -135,6 +115,45 @@ private sealed interface Route {
     data class Compare(val seedName: String? = null, val seed: SpringSpec? = null, val back: Route = Home) : Route
 }
 
+/**
+ * Keeps the open screen across activity recreation and process death. A route is stored as a nested list of
+ * plain values (ids, enum names, floats), which a Bundle can hold; Compare's seed spring is just its three
+ * numbers. Anything that doesn't decode (say, a saved type name this build no longer has) lands on Home.
+ */
+private val RouteSaver: Saver<Route, Any> = Saver(
+    save = { encodeRoute(it) },
+    restore = { saved -> runCatching { decodeRoute(saved as List<*>) }.getOrNull() ?: Route.Home },
+)
+
+private fun encodeRoute(route: Route): ArrayList<Any?> = when (route) {
+    Route.Home -> arrayListOf("home")
+    Route.NewExperiment -> arrayListOf("new")
+    is Route.Experiment -> arrayListOf("experiment", route.id, route.type.name)
+    is Route.Timeline -> arrayListOf("timeline", route.id)
+    is Route.Doodle -> arrayListOf("doodle", route.id)
+    Route.Capture -> arrayListOf("capture")
+    Route.Intro -> arrayListOf("intro")
+    is Route.Compare -> arrayListOf(
+        "compare", route.seedName, route.seed?.stiffness, route.seed?.dampingRatio, route.seed?.mass, encodeRoute(route.back),
+    )
+}
+
+private fun decodeRoute(saved: List<*>): Route = when (saved[0]) {
+    "home" -> Route.Home
+    "new" -> Route.NewExperiment
+    "experiment" -> Route.Experiment(saved[1] as Long, ExperimentType.valueOf(saved[2] as String))
+    "timeline" -> Route.Timeline(saved[1] as Long)
+    "doodle" -> Route.Doodle(saved[1] as Long)
+    "capture" -> Route.Capture
+    "intro" -> Route.Intro
+    "compare" -> Route.Compare(
+        seedName = saved[1] as String?,
+        seed = (saved[2] as Float?)?.let { k -> SpringSpec(k, saved[3] as Float, saved[4] as Float) },
+        back = decodeRoute(saved[5] as List<*>),
+    )
+    else -> Route.Home
+}
+
 /** Where Back goes from [route]: Compare returns to whoever opened it, everything else to Home. */
 private fun parentOf(route: Route): Route = if (route is Route.Compare) route.back else Route.Home
 
@@ -143,19 +162,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val database = Room.databaseBuilder(
-            applicationContext,
-            HaptureDatabase::class.java,
-            "hapture.db",
-        ).addMigrations(
-            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
-        ).build()
-        val repository = ExperimentRepository(database.experimentDao())
-        val timelineRepository = TimelineRepository(database.timelineDao())
-        val doodleRepository = DoodleRepository(database.doodleDao())
-        val tokenRepository = MotionTokenRepository(database.motionTokenDao())
-        val tokenSetRepository = TokenSetRepository(database.tokenSetDao())
-        val backdropRepository = BackdropRepository(applicationContext, database.backdropDao())
+        val app = haptureApp
+        val repository = app.experiments
+        val timelineRepository = app.timelines
+        val doodleRepository = app.doodles
+        val tokenRepository = app.tokens
+        val tokenSetRepository = app.tokenSets
+        val backdropRepository = app.backdrops
         val themeStore = ThemeStore(applicationContext)
         val compareStore = CompareStore(applicationContext)
         val introStore = IntroStore(applicationContext)
@@ -180,7 +193,7 @@ class MainActivity : ComponentActivity() {
 
             HaptureTheme(themeId) {
                 // A first-time visitor lands on the intro; everyone else goes straight to Home.
-                var route by remember { mutableStateOf<Route>(if (introStore.seen()) Route.Home else Route.Intro) }
+                var route by rememberSaveable(stateSaver = RouteSaver) { mutableStateOf<Route>(if (introStore.seen()) Route.Home else Route.Intro) }
                 val scope = rememberCoroutineScope()
                 val tokens by tokenRepository.observeAll().collectAsState(initial = emptyList<MotionTokenEntity>())
 
