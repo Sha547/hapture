@@ -11,7 +11,9 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import java.io.File
 
 /**
@@ -55,10 +57,18 @@ class BackdropRepository(private val context: Context, private val dao: Backdrop
 
     /** Returns false if [uri] isn't a readable image. */
     suspend fun set(experimentId: Long, uri: Uri): Boolean {
-        val bitmap = decode(uri) ?: return false
-        val dir = File(context.filesDir, "backdrops").apply { mkdirs() }
-        val file = File(dir, "$experimentId.jpg")
-        file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 88, it) }
+        // Decoding, compressing and writing a full screenshot takes long enough to drop frames on Main.
+        val file = withContext(Dispatchers.IO) {
+            val bitmap = decode(uri) ?: return@withContext null
+            val dir = File(context.filesDir, "backdrops").apply { mkdirs() }
+            File(dir, "$experimentId.jpg").also { file ->
+                try {
+                    file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 88, it) }
+                } finally {
+                    bitmap.recycle()
+                }
+            }
+        } ?: return false
         dao.put(BackdropEntity(experimentId, file.absolutePath, dao.get(experimentId)?.focusY ?: 0.35f))
         return true
     }
