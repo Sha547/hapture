@@ -10,7 +10,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
     entities = [ExperimentEntity::class, TimelineEntity::class, TimelineStepEntity::class, TimelineHapticEntity::class, DoodleEntity::class, MotionTokenEntity::class,
         TokenSetEntity::class, TokenSetItemEntity::class, BackdropEntity::class,
     ],
-    version = 15,
+    version = 16,
     exportSchema = false,
 )
 @TypeConverters(Converters::class)
@@ -195,5 +195,18 @@ val MIGRATION_14_15 = object : Migration(14, 15) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.execSQL("ALTER TABLE experiments ADD COLUMN expandCornerT REAL")
         db.execSQL("ALTER TABLE experiments ADD COLUMN expandFadeT REAL")
+    }
+}
+
+/**
+ * v16: a backdrop's path is now just its file name inside filesDir/backdrops. Rows written before held the
+ * absolute path; this keeps everything after the last '/'. (SQLite has no basename(): rtrim with the path's
+ * own non-slash characters strips back to the last '/', and the rest of the string is the name.)
+ */
+val MIGRATION_15_16 = object : Migration(15, 16) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "UPDATE experiment_backdrops SET path = substr(path, length(rtrim(path, replace(path, '/', ''))) + 1) WHERE path LIKE '%/%'"
+        )
     }
 }

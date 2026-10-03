@@ -197,8 +197,8 @@ class MainActivity : ComponentActivity() {
                 val scope = rememberCoroutineScope()
                 val tokens by tokenRepository.observeAll().collectAsState(initial = emptyList<MotionTokenEntity>())
 
-                // Screenshot rows of experiments deleted this session, so Undo can put them back too (the row
-                // cascades away with the experiment; the image file stays on disk until the next delete of that id).
+                // Screenshot rows of experiments deleted this session, so Undo can put them back too. The row
+                // cascades away with the experiment; the image file stays on disk until the Undo is gone for good.
                 val deletedBackdrops = remember { mutableMapOf<Long, BackdropEntity>() }
 
                 // In-app predictive back: while the system back gesture is held, the screen shrinks and leans toward
@@ -296,11 +296,15 @@ class MainActivity : ComponentActivity() {
                                 }
                             },
                             onUndoDelete = { entity ->
+                                // Taken out now, not inside the coroutine: Home settles the delete straight after
+                                // this returns, and settling must find nothing left to throw away.
+                                val backdrop = deletedBackdrops.remove(entity.id)
                                 scope.launch {
                                     repository.restore(entity)
-                                    deletedBackdrops.remove(entity.id)?.let { backdropRepository.restore(it) }
+                                    backdrop?.let { backdropRepository.restore(it) }
                                 }
                             },
+                            onDeleteSettled = { entity -> deletedBackdrops.remove(entity.id)?.let { backdropRepository.discard(it) } },
                             onPin = { entity, pinned -> scope.launch { repository.setPinned(entity, pinned) } },
                             onImport = { text ->
                                 when (val result = ProjectFile.decode(text)) {

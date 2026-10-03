@@ -39,7 +39,7 @@ class MigrationInstrumentedTest {
         val context = ApplicationProvider.getApplicationContext<android.content.Context>()
         return Room.databaseBuilder(context, HaptureDatabase::class.java, dbName)
             .addMigrations(
-                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15,
+                MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10, MIGRATION_10_11, MIGRATION_11_12, MIGRATION_12_13, MIGRATION_13_14, MIGRATION_14_15, MIGRATION_15_16,
             )
             .build()
             .also { db = it }
@@ -435,6 +435,43 @@ class MigrationInstrumentedTest {
             val read = repo.get(card.id)!!
             assertEquals(0.9f, read.expandCornerT!!, 1e-4f)
             assertEquals(0.2f, read.expandFadeT!!, 1e-4f)
+        }
+    }
+
+    @Test
+    fun v15DatabaseKeepsOnlyTheBackdropFileName() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        // The v15 schema is the same as v16's; only what's stored in experiment_backdrops.path changed.
+        val fresh = "migration-fresh15.db"
+        context.deleteDatabase(fresh)
+        Room.databaseBuilder(context, HaptureDatabase::class.java, fresh).build().apply { openHelper.writableDatabase; close() }
+        val ddl = ArrayList<String>()
+        SQLiteDatabase.openDatabase(context.getDatabasePath(fresh).path, null, SQLiteDatabase.OPEN_READONLY).use { f ->
+            f.rawQuery("SELECT sql FROM sqlite_master WHERE sql IS NOT NULL AND name NOT LIKE 'sqlite_%' AND name NOT LIKE 'android_%' AND name != 'room_master_table'", null).use { c ->
+                while (c.moveToNext()) ddl += c.getString(0)
+            }
+        }
+        context.deleteDatabase(fresh)
+
+        val absolute = java.io.File(context.filesDir, "backdrops/1.jpg").absolutePath
+        SQLiteDatabase.openOrCreateDatabase(rawDbFile(), null).use { raw ->
+            ddl.forEach { raw.execSQL(it) }
+            raw.execSQL("INSERT INTO experiments (id,type,name,createdAt,updatedAt,stiffnessT,dampingT) VALUES (1,'SPRING_DRAG','With Shot',1,2,0.5,0.5)")
+            raw.execSQL("INSERT INTO experiments (id,type,name,createdAt,updatedAt,stiffnessT,dampingT) VALUES (2,'TOGGLE','Already Named',1,2,0.5,0.5)")
+            raw.execSQL("INSERT INTO experiment_backdrops (experimentId,path,focusY) VALUES (1,'$absolute',0.6)")
+            // A bare name (nothing to strip) is left as it is.
+            raw.execSQL("INSERT INTO experiment_backdrops (experimentId,path,focusY) VALUES (2,'2.jpg',0.2)")
+            raw.version = 15
+        }
+
+        runBlocking {
+            val database = openMigrated()
+            val first = database.backdropDao().get(1)!!
+            assertEquals("1.jpg", first.path)
+            assertEquals(0.6f, first.focusY, 1e-4f)
+            assertEquals("2.jpg", database.backdropDao().get(2)!!.path)
+            // And the name resolves back to the file the old absolute path pointed at.
+            assertEquals(absolute, BackdropRepository(context, database.backdropDao()).fileOf(first.path).absolutePath)
         }
     }
 }

@@ -22,6 +22,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -91,6 +92,8 @@ fun HomeScreen(
     onRename: (ExperimentEntity, String) -> Unit,
     onDelete: (ExperimentEntity) -> Unit,
     onUndoDelete: (ExperimentEntity) -> Unit,
+    /** The Undo for this delete is gone (timed out, replaced by another delete, or Home closed) and won't come back. */
+    onDeleteSettled: (ExperimentEntity) -> Unit,
     onPin: (ExperimentEntity, Boolean) -> Unit,
     onImport: suspend (String) -> String,
     onNewTimeline: () -> Unit,
@@ -169,6 +172,13 @@ fun HomeScreen(
             delay(4000)
             recentlyDeleted = null
         }
+    }
+    // Runs whichever way the Undo bar goes away, including Home leaving the screen. After Undo the caller
+    // has already put the experiment back, so settling it then is a no-op.
+    val settle by rememberUpdatedState(onDeleteSettled)
+    DisposableEffect(recentlyDeleted) {
+        val deleted = recentlyDeleted
+        onDispose { deleted?.let { settle(it) } }
     }
 
     // System file pickers: no storage permission needed, the user hands us one file.

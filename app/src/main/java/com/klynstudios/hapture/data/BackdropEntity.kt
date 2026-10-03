@@ -20,7 +20,8 @@ import java.io.File
  * A screenshot of the person's real app that the experiment's stage shows behind the moving
  * object. Its own table (not columns on the experiment) so an editor holding an older copy of
  * the experiment can never overwrite it. [focusY] is which part of a tall screenshot the
- * stage window shows, 0 = top, 1 = bottom.
+ * stage window shows, 0 = top, 1 = bottom. [path] is the image's file name inside filesDir/backdrops,
+ * not an absolute path, so it still resolves if the app's data directory moves (a restore onto another phone).
  */
 @Entity(
     tableName = "experiment_backdrops",
@@ -60,7 +61,7 @@ class BackdropRepository(private val context: Context, private val dao: Backdrop
         // Decoding, compressing and writing a full screenshot takes long enough to drop frames on Main.
         val file = withContext(Dispatchers.IO) {
             val bitmap = decode(uri) ?: return@withContext null
-            val dir = File(context.filesDir, "backdrops").apply { mkdirs() }
+            dir.mkdirs()
             File(dir, "$experimentId.jpg").also { file ->
                 try {
                     file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.JPEG, 88, it) }
@@ -69,7 +70,7 @@ class BackdropRepository(private val context: Context, private val dao: Backdrop
                 }
             }
         } ?: return false
-        dao.put(BackdropEntity(experimentId, file.absolutePath, dao.get(experimentId)?.focusY ?: 0.35f))
+        dao.put(BackdropEntity(experimentId, file.name, dao.get(experimentId)?.focusY ?: 0.35f))
         return true
     }
 
@@ -78,16 +79,22 @@ class BackdropRepository(private val context: Context, private val dao: Backdrop
 
     /**
      * Puts back a row from [snapshot] after its experiment was restored. The image file outlives the cascade
-     * (only [clear] deletes it), so this is just the row -- unless the file has gone, then there's nothing to show.
+     * (until [clear] or [discard] deletes it), so this is just the row -- unless the file has gone, then there's
+     * nothing to show.
      */
     suspend fun restore(backdrop: BackdropEntity) {
-        if (File(backdrop.path).exists()) dao.put(backdrop)
+        if (fileOf(backdrop.path).exists()) dao.put(backdrop)
+    }
+
+    /** Deletes a [snapshot]'s image once its experiment's delete can no longer be undone. The row is already gone. */
+    fun discard(backdrop: BackdropEntity) {
+        fileOf(backdrop.path).delete()
     }
 
     suspend fun setFocus(experimentId: Long, focusY: Float) =dao.setFocus(experimentId, focusY.coerceIn(0f, 1f))
 
     suspend fun clear(experimentId: Long) {
-        dao.get(experimentId)?.let { File(it.path).delete() }
+        dao.get(experimentId)?.let { fileOf(it.path).delete() }
         dao.remove(experimentId)
     }
 
@@ -104,7 +111,12 @@ class BackdropRepository(private val context: Context, private val dao: Backdrop
         null
     }
 
-    fun load(path: String): Bitmap? = BitmapFactory.decodeFile(path)
+    fun load(path: String): Bitmap? = BitmapFactory.decodeFile(fileOf(path).path)
+
+    private val dir get() = File(context.filesDir, "backdrops")
+
+    /** Only the last segment is used, so a stored name can never point outside the backdrops folder. */
+    fun fileOf(path: String): File = File(dir, File(path).name)
 
     companion object {
         const val MAX_EDGE = 1600

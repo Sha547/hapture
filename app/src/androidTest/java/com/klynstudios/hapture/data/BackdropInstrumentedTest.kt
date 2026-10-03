@@ -47,7 +47,9 @@ class BackdropInstrumentedTest {
         val e = experiments.createDefault(ExperimentType.SPRING_DRAG)
         assertTrue(repo.set(e.id, screenshot(1200, 3200, Color.RED)))
         val row = repo.observe(e.id).first()!!
-        assertTrue(File(row.path).exists())
+        // Stored as a bare file name, resolved inside filesDir/backdrops.
+        assertEquals("${e.id}.jpg", row.path)
+        assertTrue(repo.fileOf(row.path).exists())
         val loaded = repo.load(row.path)!!
         assertTrue("long edge ${maxOf(loaded.width, loaded.height)}", maxOf(loaded.width, loaded.height) <= BackdropRepository.MAX_EDGE)
         // Stored as JPEG, so allow for its rounding: still clearly red.
@@ -62,7 +64,7 @@ class BackdropInstrumentedTest {
 
         repo.clear(e.id)
         assertNull(repo.observe(e.id).first())
-        assertFalse(File(row.path).exists())
+        assertFalse(repo.fileOf(row.path).exists())
     }
 
     @Test fun somethingThatIsNotAnImageIsRefusedAndLeavesNothingBehind() = runBlocking {
