@@ -2,6 +2,7 @@ package com.klynstudios.hapture.core
 
 import com.klynstudios.hapture.core.capture.ObjectTracker
 import com.klynstudios.hapture.core.capture.SpringFit
+import com.klynstudios.hapture.core.physics.ParameterMapping
 import com.klynstudios.hapture.export.SpringMath
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -36,6 +37,18 @@ class CaptureTest {
         val r = SpringFit.fit(noisy)!!
         assertEquals(0.5f, r.dampingRatio, 0.12f)
         assertEquals(600f, r.stiffness, 600f * 0.25f)
+    }
+
+    @Test fun `a captured spring outside the sliders is fitted to one they can set, and saves unchanged`() {
+        // Stiffer and bouncier than the sliders go, then softer and more sluggish than they go.
+        for ((k, z) in listOf(5000.0 to 0.08, 30.0 to 1.9)) {
+            val r = SpringFit.fit(curve(k, z, seconds = 3.0))!!
+            assertTrue("k=${r.stiffness}", r.stiffness in ParameterMapping.STIFFNESS_MIN..ParameterMapping.STIFFNESS_MAX)
+            assertTrue("z=${r.dampingRatio}", r.dampingRatio in ParameterMapping.DAMPING_RATIO_MIN..ParameterMapping.DAMPING_RATIO_MAX)
+            // What Create experiment stores (slider positions) reads back as the spring the screen showed.
+            assertEquals(r.stiffness, ParameterMapping.stiffness(ParameterMapping.stiffnessT(r.stiffness)), r.stiffness * 1e-4f)
+            assertEquals(r.dampingRatio, ParameterMapping.dampingRatio(ParameterMapping.dampingT(r.dampingRatio)), 1e-4f)
+        }
     }
 
     @Test fun `too few samples cannot be fitted`() {

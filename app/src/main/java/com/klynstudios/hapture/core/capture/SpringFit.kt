@@ -1,5 +1,6 @@
 package com.klynstudios.hapture.core.capture
 
+import com.klynstudios.hapture.core.physics.ParameterMapping
 import com.klynstudios.hapture.export.SpringMath
 import kotlin.math.exp
 import kotlin.math.ln
@@ -10,15 +11,19 @@ import kotlin.math.sqrt
  * curve, by least squares: a coarse grid over stiffness and damping ratio,
  * then a shrinking pattern search around the best cell. Times are seconds
  * from the start of the motion; values run from 0 (start) to 1 (rest).
+ *
+ * The search only covers springs the editor's sliders can reach ([ParameterMapping]), so the spring
+ * reported, charted and saved is one and the same. A motion stiffer or bouncier than that comes back as
+ * the closest settable spring, and a higher fit error says how far off it is.
  */
 object SpringFit {
 
     data class Result(val stiffness: Float, val dampingRatio: Float, val rms: Float)
 
-    private const val K_MIN = 30.0
-    private const val K_MAX = 6000.0
-    private const val Z_MIN = 0.05
-    private const val Z_MAX = 2.0
+    private const val K_MIN = ParameterMapping.STIFFNESS_MIN.toDouble()
+    private const val K_MAX = ParameterMapping.STIFFNESS_MAX.toDouble()
+    private const val Z_MIN = ParameterMapping.DAMPING_RATIO_MIN.toDouble()
+    private const val Z_MAX = ParameterMapping.DAMPING_RATIO_MAX.toDouble()
 
     fun fit(samples: List<Pair<Float, Float>>): Result? {
         if (samples.size < 4) return null

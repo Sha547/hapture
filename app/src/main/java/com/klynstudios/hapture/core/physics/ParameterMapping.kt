@@ -13,17 +13,23 @@ import androidx.compose.animation.core.Spring
  */
 object ParameterMapping {
 
+    /** The springs the stiffness and damping sliders can reach. Capture fits inside these too, so it never reports one you can't set. */
+    const val STIFFNESS_MIN = Spring.StiffnessVeryLow
+    const val STIFFNESS_MAX = 3000f
+    const val DAMPING_RATIO_MIN = 0.15f
+    const val DAMPING_RATIO_MAX = 1.5f
+
     /** 0f (soft) .. 1f (firm) -> stiffness, ~50..3000 */
-    fun stiffness(t: Float): Float = lerp(Spring.StiffnessVeryLow, 3000f, t.coerceIn(0f, 1f))
+    fun stiffness(t: Float): Float = lerp(STIFFNESS_MIN, STIFFNESS_MAX, t.coerceIn(0f, 1f))
 
     /** Inverse of [stiffness], clamped: the slider position closest to a given stiffness. */
-    fun stiffnessT(k: Float): Float = ((k - Spring.StiffnessVeryLow) / (3000f - Spring.StiffnessVeryLow)).coerceIn(0f, 1f)
+    fun stiffnessT(k: Float): Float = ((k - STIFFNESS_MIN) / (STIFFNESS_MAX - STIFFNESS_MIN)).coerceIn(0f, 1f)
 
     /** Inverse of [dampingRatio], clamped. */
-    fun dampingT(z: Float): Float = ((z - 0.15f) / (1.5f - 0.15f)).coerceIn(0f, 1f)
+    fun dampingT(z: Float): Float = ((z - DAMPING_RATIO_MIN) / (DAMPING_RATIO_MAX - DAMPING_RATIO_MIN)).coerceIn(0f, 1f)
 
     /** 0f (bouncy) .. 1f (firm, no overshoot) -> damping ratio, ~0.15..1.5 */
-    fun dampingRatio(t: Float): Float = lerp(0.15f, 1.5f, t.coerceIn(0f, 1f))
+    fun dampingRatio(t: Float): Float = lerp(DAMPING_RATIO_MIN, DAMPING_RATIO_MAX, t.coerceIn(0f, 1f))
 
     /** 0f (no resistance) .. 1f (very resistant) -> rubber-band constant k */
     fun resistance(t: Float): Float = lerp(0.01f, 0.08f, t.coerceIn(0f, 1f))
