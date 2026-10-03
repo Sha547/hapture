@@ -1,7 +1,8 @@
 package com.klynstudios.hapture.core.sync
 
-import java.io.BufferedReader
-import java.io.InputStreamReader
+import java.io.BufferedInputStream
+import java.io.ByteArrayOutputStream
+import java.io.InputStream
 import java.io.OutputStream
 import java.net.ServerSocket
 import java.net.Socket
@@ -24,6 +25,11 @@ import kotlin.concurrent.thread
  * 30 seconds and change the code, so it can't be guessed by counting up. Traffic is
  * still plain HTTP on the local network.
  *
+ * A connection gets [headerTimeoutMs] to send its request, and the request line and headers are
+ * capped, so a client that stalls or floods can't hold a thread. Event streams are long-lived and
+ * have no read timeout; instead they get a comment line every [keepAliveMs], which is how a
+ * client that went away gets noticed, and they're closed once the token they opened with expires.
+ *
  * Plain sockets, no dependency; JVM-only so it is unit-testable.
  */
 class LiveSyncServer(
@@ -31,6 +37,8 @@ class LiveSyncServer(
     private val bridgeHtml: () -> String = { "<!doctype html><title>Hapture</title><p>Hapture live sync." },
     private val clock: () -> Long = System::currentTimeMillis,
     private val onCodeChange: (String) -> Unit = {},
+    private val headerTimeoutMs: Int = HEADER_TIMEOUT_MS,
+    private val keepAliveMs: Long = KEEP_ALIVE_MS,
 ) {
     sealed interface Pairing {
         data class Paired(val token: String) : Pairing
@@ -41,7 +49,10 @@ class LiveSyncServer(
     @Volatile private var server: ServerSocket? = null
     @Volatile private var latest: String = "{}"
     @Volatile private var latestExports: String = "{}"
-    private val streams = CopyOnWriteArrayList<OutputStream>()
+    /** An open `/events` connection and the token it was opened with. Writes to it lock on the stream itself. */
+    private class Stream(val socket: Socket, val out: OutputStream, val token: String)
+
+    private val streams = CopyOnWriteArrayList<Stream>()
     private val random = SecureRandom()
 
     private val lock = Any()
@@ -67,6 +78,12 @@ class LiveSyncServer(
                 thread(isDaemon = true, name = "live-sync-conn") { handle(c) }
             }
         }
+        thread(isDaemon = true, name = "live-sync-keepalive") {
+            while (!s.isClosed) {
+                try { Thread.sleep(keepAliveMs) } catch (_: InterruptedException) { break }
+                if (!s.isClosed) keepAlive()
+            }
+        }
         return s.localPort
     }
 
@@ -75,7 +92,7 @@ class LiveSyncServer(
         server?.close()
         server = null
         synchronized(lock) { tokens.clear() }
-        streams.forEach { runCatching { it.close() } }
+        streams.forEach { close(it) }
         streams.clear()
     }
 
@@ -85,9 +102,31 @@ class LiveSyncServer(
         if (specJson == latest) return
         latest = specJson
         val frame = sse(specJson).toByteArray()
-        streams.forEach { out ->
-            try { out.write(frame); out.flush() } catch (_: Exception) { streams.remove(out); runCatching { out.close() } }
+        streams.forEach { send(it, frame) }
+    }
+
+    /**
+     * Closes streams whose token has expired and sends the rest an SSE comment (ignored by EventSource),
+     * so a client that vanished without closing fails the write and is dropped. Runs every [keepAliveMs].
+     */
+    internal fun keepAlive() {
+        streams.forEach { if (isValid(it.token)) send(it, KEEP_ALIVE) else close(it) }
+    }
+
+    /** How many event streams are open right now. */
+    internal val streamCount: Int get() = streams.size
+
+    private fun send(stream: Stream, frame: ByteArray) {
+        try {
+            synchronized(stream) { stream.out.write(frame); stream.out.flush() }
+        } catch (_: Exception) {
+            close(stream)
         }
+    }
+
+    private fun close(stream: Stream) {
+        streams.remove(stream)
+        runCatching { stream.socket.close() }
     }
 
     /** Trades a code for a token. Five wrong guesses lock pairing for [LOCK_MS] and rotate the code. */
@@ -136,17 +175,44 @@ class LiveSyncServer(
 
     private class Request(val method: String, val path: String, val query: Map<String, String>, val body: String)
 
+    /** The request line or headers went over [MAX_LINE] or [MAX_HEADERS]. */
+    private class TooLarge : Exception()
+
+    /** One CRLF- or LF-terminated line, without the terminator; null at end of stream. Throws [TooLarge] past [MAX_LINE]. */
+    private fun readLine(input: InputStream): String? {
+        val buf = ByteArrayOutputStream()
+        while (true) {
+            val b = input.read()
+            if (b == -1) return if (buf.size() == 0) null else buf.toString(Charsets.UTF_8.name())
+            if (b == '\n'.code) break
+            if (buf.size() >= MAX_LINE) throw TooLarge()
+            buf.write(b)
+        }
+        return buf.toString(Charsets.UTF_8.name()).removeSuffix("\r")
+    }
+
     private fun read(c: Socket): Request? {
-        val reader = BufferedReader(InputStreamReader(c.getInputStream()))
-        val line = reader.readLine() ?: return null
+        val input = BufferedInputStream(c.getInputStream())
+        val line = readLine(input) ?: return null
         val parts = line.split(" ")
         var length = 0
+        var headers = 0
         while (true) {
-            val h = reader.readLine() ?: break
+            val h = readLine(input) ?: break
             if (h.isEmpty()) break
+            if (++headers > MAX_HEADERS) throw TooLarge()
             if (h.startsWith("content-length:", ignoreCase = true)) length = h.substringAfter(':').trim().toIntOrNull() ?: 0
         }
-        val body = if (length in 1..MAX_BODY) CharArray(length).also { reader.read(it, 0, length) }.concatToString() else ""
+        val body = if (length in 1..MAX_BODY) {
+            val bytes = ByteArray(length)
+            var got = 0
+            while (got < length) {
+                val n = input.read(bytes, got, length - got)
+                if (n == -1) break
+                got += n
+            }
+            String(bytes, 0, got, Charsets.UTF_8)
+        } else ""
         val target = parts.getOrNull(1) ?: "/"
         val query = target.substringAfter('?', "").split('&').filter { it.contains('=') }
             .associate { it.substringBefore('=') to java.net.URLDecoder.decode(it.substringAfter('='), "UTF-8") }
@@ -166,7 +232,15 @@ class LiveSyncServer(
 
     private fun handle(c: Socket) {
         try {
-            val req = read(c) ?: return
+            // Only for reading the request: a stream that's started clears it again below.
+            c.soTimeout = headerTimeoutMs
+            val req = try {
+                read(c)
+            } catch (_: TooLarge) {
+                respond(c.getOutputStream(), "431 Request Header Fields Too Large", "text/plain", "Request too large.\n")
+                c.close()
+                return
+            } ?: run { c.close(); return }
             val out = c.getOutputStream()
             val json = "application/json"
             when {
@@ -188,10 +262,14 @@ class LiveSyncServer(
                 req.path == "/spec" -> { respond(out, "200 OK", json, latest); c.close() }
                 req.path == "/exports" -> { respond(out, "200 OK", json, latestExports); c.close() }
                 req.path == "/events" -> {
-                    out.write("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nAccess-Control-Allow-Origin: *\r\nConnection: keep-alive\r\n\r\n".toByteArray())
-                    out.write(sse(latest).toByteArray())
-                    out.flush()
-                    streams += out
+                    c.soTimeout = 0
+                    val stream = Stream(c, out, req.query["t"]!!)
+                    synchronized(stream) {
+                        out.write("HTTP/1.1 200 OK\r\nContent-Type: text/event-stream\r\nCache-Control: no-cache\r\nAccess-Control-Allow-Origin: *\r\nConnection: keep-alive\r\n\r\n".toByteArray())
+                        out.write(sse(latest).toByteArray())
+                        out.flush()
+                        streams += stream
+                    }
                 }
                 else -> { respond(out, "404 Not Found", "text/plain", "Not found.\n"); c.close() }
             }
@@ -204,7 +282,13 @@ class LiveSyncServer(
         const val MAX_FAILURES = 5
         const val LOCK_MS = 30_000L
         const val TOKEN_TTL_MS = 30 * 60_000L
+        const val HEADER_TIMEOUT_MS = 10_000
+        const val KEEP_ALIVE_MS = 20_000L
+        /** Longest request line or header line, in bytes. A bridge link's token query is well under this. */
+        const val MAX_LINE = 4096
+        const val MAX_HEADERS = 64
         private const val MAX_BODY = 512
+        private val KEEP_ALIVE = ": keep-alive\n\n".toByteArray()
         private val PROTECTED = setOf("/spec", "/exports", "/events")
     }
 }

@@ -158,6 +158,15 @@ private fun decodeRoute(saved: List<*>): Route = when (saved[0]) {
 private fun parentOf(route: Route): Route = if (route is Route.Compare) route.back else Route.Home
 
 class MainActivity : ComponentActivity() {
+    /**
+     * Live sync serves the spec only while Hapture is on screen: a server left listening on the Wi-Fi after the
+     * person has moved on is an open door they've forgotten about. A rotation or theme change isn't leaving.
+     */
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations) com.klynstudios.hapture.core.sync.LiveSync.stop()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

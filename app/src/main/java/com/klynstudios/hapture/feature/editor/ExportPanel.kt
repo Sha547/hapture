@@ -246,7 +246,8 @@ internal fun ExportPanel(
 
         Spacer(Modifier.height(28.dp))
         SectionLabel("Live sync")
-        val host = LiveSync.addresses().firstOrNull() ?: "localhost"
+        // Looked up when sync starts or stops, not on every recomposition (it walks every network interface).
+        val host = remember(LiveSync.running) { LiveSync.addresses().firstOrNull() ?: "localhost" }
         ListRow(
             title = if (LiveSync.running) "Live sync is on" else "Start live sync",
             subtitle = if (LiveSync.running) "Pairing code ${LiveSync.code}  \u00b7  http://$host:${LiveSync.port}" else "Serve this spring to the browser bridge, the Figma plugin or a dev build",

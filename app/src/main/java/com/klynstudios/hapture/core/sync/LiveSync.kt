@@ -7,6 +7,29 @@ import androidx.compose.runtime.setValue
 import java.net.Inet4Address
 import java.net.NetworkInterface
 
+/** Interface name prefixes of mobile data links; nothing on the local Wi-Fi can reach an address on them. */
+private val CELLULAR = listOf("rmnet", "ccmni", "pdp", "v4-rmnet", "v4-ccmni", "dummy")
+
+/** Interface name prefixes for Wi-Fi, the phone's own hotspot and wired Ethernet. */
+private val LOCAL = listOf("wlan", "swlan", "ap", "eth")
+
+/** 10/8, 172.16/12 and 192.168/16: where a home or office network puts the phone. */
+internal fun isPrivateIpv4(ip: String): Boolean {
+    val p = ip.split('.').mapNotNull { it.toIntOrNull() }
+    if (p.size != 4) return false
+    return p[0] == 10 || (p[0] == 172 && p[1] in 16..31) || (p[0] == 192 && p[1] == 168)
+}
+
+/**
+ * Orders (interface name, IPv4) pairs for showing to a person: cellular links are dropped, then
+ * private-range addresses on a Wi-Fi interface come first, then any other private address, then the rest.
+ */
+internal fun rankAddresses(candidates: List<Pair<String, String>>): List<String> =
+    candidates.filter { (name, ip) -> ip.isNotEmpty() && CELLULAR.none { name.startsWith(it) } }
+        .sortedWith(compareBy({ !isPrivateIpv4(it.second) }, { (name, _) -> LOCAL.none { name.startsWith(it) } }))
+        .map { it.second }
+        .distinct()
+
 /** App-wide live-sync switch: one server, off until someone turns it on. */
 object LiveSync {
     @Volatile private var bridge = "<!doctype html><title>Hapture</title><p>Bridge page missing from this build."
@@ -37,10 +60,13 @@ object LiveSync {
 
     val port: Int get() = server.port
 
-    /** This device's IPv4 addresses on non-loopback interfaces, as people would type them into a browser. */
+    /** This device's IPv4 addresses a computer on the same network could reach, best first (see [rankAddresses]). */
     fun addresses(): List<String> = try {
-        NetworkInterface.getNetworkInterfaces().toList().filter { it.isUp && !it.isLoopback }
-            .flatMap { it.inetAddresses.toList() }.filterIsInstance<Inet4Address>().map { it.hostAddress ?: "" }.filter { it.isNotEmpty() }
+        rankAddresses(
+            NetworkInterface.getNetworkInterfaces().toList().filter { it.isUp && !it.isLoopback }.flatMap { nic ->
+                nic.inetAddresses.toList().filterIsInstance<Inet4Address>().mapNotNull { a -> a.hostAddress?.let { nic.name to it } }
+            }
+        )
     } catch (_: Exception) { emptyList() }
 
     fun clientSnippet(host: String): String = """
