@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.klynstudios.hapture.core.capture.ObjectTracker
 import com.klynstudios.hapture.core.capture.SpringFit
 import com.klynstudios.hapture.feature.capture.VideoFrames
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
@@ -33,7 +34,7 @@ class CaptureInstrumentedTest {
         assertNotNull(first)
         val target = VideoFrames.colorAt(first!!, (40f + 20f) / 320f, 120f / 240f)
 
-        val samples = VideoFrames.track(ctx, uri, target, startSec = 0f, lengthSec = 2.4f)
+        val samples = runBlocking { VideoFrames.track(ctx, uri, target, startSec = 0f, lengthSec = 2.4f) }
         val curve = ObjectTracker.toCurve(samples)
         assertNotNull("motion should be detected", curve)
         val fit = SpringFit.fit(curve!!)!!
@@ -55,7 +56,7 @@ class CaptureInstrumentedTest {
         val blue = VideoFrames.colorAt(first, 60f / 320f, 150f / 240f)
         assertTrue(com.klynstudios.hapture.core.capture.MultiTrack.distinguishable(red, blue))
 
-        val both = VideoFrames.trackAll(ctx, uri, listOf(red, blue), startSec = 0f, lengthSec = 2.4f)
+        val both = runBlocking { VideoFrames.trackAll(ctx, uri, listOf(red, blue), startSec = 0f, lengthSec = 2.4f) }
         val out = com.klynstudios.hapture.core.capture.MultiTrack.analyse(both[0], both[1])
         val a = (out as com.klynstudios.hapture.core.capture.MultiTrack.Outcome.Ok).analysis
         assertEquals(0.5f, a.first.fit.dampingRatio, 0.15f)
