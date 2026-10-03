@@ -15,7 +15,7 @@ object DesignTokenExporter {
 
         return """
             |{
-            |  "motionLab": {
+            |  "hapture": {
             |    "theme": { "${'$'}value": "${tokens.id.name.lowercase()}", "${'$'}type": "string" },
             |    "color": {
             |${color("canvas", tokens.canvas)}

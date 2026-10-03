@@ -61,7 +61,7 @@ class DesignSpecTest {
 
     @Test fun `tokens export is valid dtcg json for every theme`() {
         for (t in DesignThemes.all) {
-            val j = JSONObject(DesignTokenExporter.json(t)).getJSONObject("motionLab")
+            val j = JSONObject(DesignTokenExporter.json(t)).getJSONObject("hapture")
             val ink = j.getJSONObject("color").getJSONObject("ink")
             assertEquals("color", ink.getString("\$type"))
             assertEquals(DesignSpec.hex(t.ink), ink.getString("\$value"))

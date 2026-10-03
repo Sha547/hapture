@@ -102,6 +102,9 @@ class MotionSpecTest {
         assertTrue(code.contains(".offset(x: active ? 22 : 0)"))
         assertTrue(code.contains(".scaleEffect(active ? 1.1 : 1)"))
         assertTrue(code.contains(".delay(0.06)"))
+        // Generated names carry the app's current name, not the old Motion Lab one.
+        assertTrue(code.contains("static let hapture"))
+        assertTrue(!code.contains("motionLab"))
     }
 
     @Test fun `lottie is a well formed file whose curve ends at the target`() {

@@ -9,7 +9,7 @@ object SwiftUiGenerator {
         val s = spec.spring
         val mods = spec.transitions.joinToString("\n") { t ->
             val dl = if (t.delayMs > 0) ".delay(${n(t.delayMs / 1000f)})" else ""
-            val anim = ".animation((reduceMotion ? .motionLab${p}Reduced : .motionLab$p)$dl, value: active)"
+            val anim = ".animation((reduceMotion ? .hapture${p}Reduced : .hapture$p)$dl, value: active)"
             val effect = when (t.property) {
                 "scale" -> ".scaleEffect(active ? ${n(t.to)} : ${n(t.from)})"
                 "offsetY" -> ".offset(y: active ? ${n(t.to)} : ${n(t.from)})"
@@ -24,9 +24,9 @@ object SwiftUiGenerator {
             |
             |extension Animation {
             |    /// The tuned spring. `interpolatingSpring` takes absolute damping, not a ratio.
-            |    static let motionLab$p = Animation.interpolatingSpring(mass: ${n(s.mass)}, stiffness: ${n(s.stiffness, 1)}, damping: ${n(s.damping, 2)})
+            |    static let hapture$p = Animation.interpolatingSpring(mass: ${n(s.mass)}, stiffness: ${n(s.stiffness, 1)}, damping: ${n(s.damping, 2)})
             |    /// Reduced Motion: same stiffness, critically damped, so nothing overshoots.
-            |    static let motionLab${p}Reduced = Animation.interpolatingSpring(mass: ${n(s.mass)}, stiffness: ${n(s.stiffness, 1)}, damping: ${n(s.reduced().damping, 2)})
+            |    static let hapture${p}Reduced = Animation.interpolatingSpring(mass: ${n(s.mass)}, stiffness: ${n(s.stiffness, 1)}, damping: ${n(s.reduced().damping, 2)})
             |}
             |
             |/// Usage skeleton: tap toggles `active`; wire it to your own trigger.
