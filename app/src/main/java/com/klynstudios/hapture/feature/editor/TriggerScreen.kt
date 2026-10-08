@@ -65,9 +65,11 @@ import com.klynstudios.hapture.core.spec.Chain
 import com.klynstudios.hapture.core.spec.TriggerSpecs
 import com.klynstudios.hapture.data.ExperimentEntity
 import com.klynstudios.hapture.data.ExperimentRepository
+import com.klynstudios.hapture.data.ExperimentType
 import com.klynstudios.hapture.export.DesignSpec
 import com.klynstudios.hapture.export.SpringMath
 import com.klynstudios.hapture.export.platform.ComposeGenericGenerator
+import com.klynstudios.hapture.feature.common.label
 import com.klynstudios.hapture.ui.design.AppScreen
 import com.klynstudios.hapture.ui.design.Chip
 import com.klynstudios.hapture.ui.design.LocalTokens
@@ -241,7 +243,7 @@ fun TriggerScreen(
     }
 
     EditorScaffold(
-        title = loaded?.name ?: "Trigger",
+        title = ExperimentType.valueOf(kind.name).label,
         onBack = onBack,
         spring = SpringSpec(ParameterMapping.stiffness(stiffnessT), ParameterMapping.dampingRatio(dampingT)),
         stage = {

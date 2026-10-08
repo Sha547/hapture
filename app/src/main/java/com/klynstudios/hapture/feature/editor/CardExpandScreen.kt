@@ -52,9 +52,11 @@ import com.klynstudios.hapture.core.physics.ParameterMapping
 import com.klynstudios.hapture.core.spec.SpringSpec
 import com.klynstudios.hapture.data.ExperimentEntity
 import com.klynstudios.hapture.data.ExperimentRepository
+import com.klynstudios.hapture.data.ExperimentType
 import com.klynstudios.hapture.export.CardExpandCodeGenerator
 import com.klynstudios.hapture.export.DesignSpec
 import com.klynstudios.hapture.export.SpringMath
+import com.klynstudios.hapture.feature.common.label
 import com.klynstudios.hapture.ui.design.LocalBackdrop
 import com.klynstudios.hapture.ui.design.LocalBackdropAction
 import com.klynstudios.hapture.ui.design.LocalTokens
@@ -183,7 +185,7 @@ fun CardExpandScreen(
     val name = loaded?.name ?: "Card Expand"
 
     EditorScaffold(
-        title = loaded?.name ?: "Card expand",
+        title = ExperimentType.CARD_EXPAND.label,
         onBack = onBack,
         spring = SpringSpec(ParameterMapping.stiffness(stiffnessT), ParameterMapping.dampingRatio(dampingT)),
         stage = {

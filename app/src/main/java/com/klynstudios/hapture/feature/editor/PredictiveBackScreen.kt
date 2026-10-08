@@ -52,9 +52,11 @@ import com.klynstudios.hapture.core.physics.PredictiveBackSolver
 import com.klynstudios.hapture.core.spec.SpringSpec
 import com.klynstudios.hapture.data.ExperimentEntity
 import com.klynstudios.hapture.data.ExperimentRepository
+import com.klynstudios.hapture.data.ExperimentType
 import com.klynstudios.hapture.export.DesignSpec
 import com.klynstudios.hapture.export.PredictiveBackCodeGenerator
 import com.klynstudios.hapture.export.SpringMath
+import com.klynstudios.hapture.feature.common.label
 import com.klynstudios.hapture.ui.design.AppIcon
 import com.klynstudios.hapture.ui.design.IconKind
 import com.klynstudios.hapture.ui.design.LocalBackdrop
@@ -180,7 +182,7 @@ fun PredictiveBackScreen(
     val name = loaded?.name ?: "Predictive Back"
 
     EditorScaffold(
-        title = loaded?.name ?: "Predictive back",
+        title = ExperimentType.PREDICTIVE_BACK.label,
         onBack = onBack,
         spring = SpringSpec(ParameterMapping.stiffness(stiffnessT), ParameterMapping.dampingRatio(dampingT)),
         stage = {
