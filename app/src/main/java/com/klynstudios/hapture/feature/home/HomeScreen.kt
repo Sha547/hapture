@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
@@ -402,6 +403,15 @@ fun HomeScreen(
 
         Spacer(Modifier.height(56.dp))
         Column(Modifier.reveal(5)) { AppearanceSection(themeId, onTheme) }
+
+        Spacer(Modifier.height(40.dp))
+        val uriHandler = LocalUriHandler.current
+        // runCatching: a phone with no browser would otherwise crash here.
+        TextLink(
+            label = "Privacy policy",
+            onClick = { runCatching { uriHandler.openUri(PRIVACY_POLICY_URL) } },
+            modifier = Modifier.testTag("privacyPolicy"),
+        )
         Spacer(Modifier.height(48.dp))
     }
 
@@ -524,6 +534,9 @@ private fun readCapped(stream: InputStream, max: Int): String {
     }
     return out.toString(Charsets.UTF_8.name())
 }
+
+/** The same page the Play listing links to (source: docs/privacy.md). */
+private const val PRIVACY_POLICY_URL = "https://sha547.github.io/hapture/privacy/"
 
 /** Theme swatches plus a way to take the design tokens into a design tool. */
 @Composable
